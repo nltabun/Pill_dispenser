@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "pico/stdlib.h"
 #include "../src/stepper_motor.h"
+#include "../src/lora.h"
 
 #define LED_0 20
 #define LED_1 21
@@ -8,29 +9,30 @@
 #define BUTTON_SW0 9
 #define BUTTON_SW1 8
 #define BUTTON_SW2 7
-#define UART_NR 1 
-#define UART_TX_PIN 4
-#define UART_RX_PIN 5
-#define UART_BAUD_RATE 9600
 #define I2C_PORT i2c1
 #define I2C_PORT_SDA_PIN 14
 #define I2C_PORT_SDL_PIN 15
 #define I2C_BAUD_RATE 100000
 
-
-enum State {
-    WAIT = 0,
-    CALIBRATE = 1,
-    READY = 2,
-    DISPENSING = 3
-} DispenserState;
-
 void init_all();
+
+MotorSteps MOTOR_STEPS = {
+        {{1, 0, 0, 0}, // 0
+         {1, 1, 0, 0}, // 1
+         {0, 1, 0, 0}, // 2
+         {0, 1, 1, 0}, // 3
+         {0, 0, 1, 0}, // 4
+         {0, 0, 1, 1}, // 5
+         {0, 0, 0, 1}, // 6
+         {1, 0, 0, 1}},  // 7
+        {0},
+        {0}
+};
 
 int main() {
     init_all();
-
-    while (true) {
+    while (true)
+    {
 
     }
 }
