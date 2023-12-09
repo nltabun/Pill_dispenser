@@ -3,6 +3,7 @@
 #include "hardware/gpio.h"
 #include "hardware/i2c.h"
 #include "../src/stepper_motor.h"
+#include "../src/lora.h"
 
 #define LED_0 20
 #define LED_1 21
@@ -10,10 +11,6 @@
 #define BUTTON_SW0 9
 #define BUTTON_SW1 8
 #define BUTTON_SW2 7
-#define UART_NR 1
-#define UART_TX_PIN 4
-#define UART_RX_PIN 5
-#define UART_BAUD_RATE 9600
 #define I2C_PORT i2c1
 #define I2C_PORT_SDA_PIN 14
 #define I2C_PORT_SDL_PIN 15
@@ -35,6 +32,18 @@ int main()
     bool led0 = false;
     u_int8_t led_timer = 0;
 
+    MotorSteps MOTOR_STEPS = {
+        {{1, 0, 0, 0}, // 0
+         {1, 1, 0, 0}, // 1
+         {0, 1, 0, 0}, // 2
+         {0, 1, 1, 0}, // 3
+         {0, 0, 1, 0}, // 4
+         {0, 0, 1, 1}, // 5
+         {0, 0, 0, 1}, // 6
+         {1, 0, 0, 1}},  // 7
+        {0},
+        {0}
+    };
 
     init_all();
 
@@ -57,6 +66,10 @@ int main()
                 sleep_ms(10);
             }
             gpio_put(LED_0, (led0 = false));
+
+
+
+
 
             while (!gpio_get(BUTTON_SW1))
                 sleep_ms(10);
