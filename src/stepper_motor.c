@@ -1,4 +1,5 @@
 // Stepper motor stuff
+#include <stdio.h>
 #include "pico/stdlib.h"
 #include "stepper_motor.h"
 
@@ -31,14 +32,14 @@ uint8_t adjust_current_step(uint8_t current_step, bool reverse)
     return 0;
 }
 
-void rotate_motor(const MotorSteps *motor_steps, bool reverse)
+void rotate_motor(MotorSteps *motor_steps, bool reverse)
 {
     motor_steps->current_step = adjust_current_step(motor_steps->current_step, reverse);
-    motor_step(motor_steps->steps[motor_steps.current_step]);
+    motor_step(motor_steps->steps[motor_steps->current_step]);
     sleep_ms(DELAY_MS);
 }
 
-void calibrate(const MotorSteps *motor_steps, uint8_t *current_step, const int runs, int *steps_per_revolution)
+void calibrate(MotorSteps *motor_steps, uint8_t *current_step, const int runs, int *steps_per_revolution)
 {
     printf("Calibrating...\n");
 
@@ -56,25 +57,25 @@ void calibrate(const MotorSteps *motor_steps, uint8_t *current_step, const int r
         {
             while (gpio_get(OPTO_FORK_PIN))
             {
-                rotate_motor(motor_steps, current_step, false);
+                rotate_motor(motor_steps, false);
             }
         }
 
         while (!gpio_get(OPTO_FORK_PIN))
         {
-            rotate_motor(motor_steps, current_step, false);
+            rotate_motor(motor_steps, false);
         }
 
         // Start counting steps
         while (gpio_get(OPTO_FORK_PIN))
         {
-            rotate_motor(motor_steps, current_step, false);
+            rotate_motor(motor_steps, false);
             steps++;
         }
 
         while (!gpio_get(OPTO_FORK_PIN))
         {
-            rotate_motor(motor_steps, current_step, false);
+            rotate_motor(motor_steps, false);
             steps++;
             low_steps++;
         }
@@ -87,7 +88,7 @@ void calibrate(const MotorSteps *motor_steps, uint8_t *current_step, const int r
         {
             for (int j = 0; j < (total_low_steps / runs) / 2; j++)
             {
-                rotate_motor(motor_steps, current_step, true);
+                rotate_motor(motor_steps, true);
             }
         }
 
@@ -100,7 +101,7 @@ void calibrate(const MotorSteps *motor_steps, uint8_t *current_step, const int r
     printf("Calibration complete. Steps per revolution: %d\n", *steps_per_revolution);
 }
 
-void run_motor(const MotorSteps *motor_steps, uint8_t *current_step, int runs, int *steps_per_revolution)
+void run_motor(MotorSteps *motor_steps, uint8_t *current_step, int runs, int *steps_per_revolution)
 {
     int run_steps;
 
@@ -117,7 +118,7 @@ void run_motor(const MotorSteps *motor_steps, uint8_t *current_step, int runs, i
 
     for (int i = 0; i < run_steps; i++)
     {
-        rotate_motor(motor_steps, current_step, false); 
+        rotate_motor(motor_steps, false); 
     }
 
     printf("Motor ran %d times\n", runs);

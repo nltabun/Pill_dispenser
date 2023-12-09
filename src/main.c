@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "pico/stdlib.h"
+#include "../src/stepper_motor.h"
 
 #define LED_0 20
 #define LED_1 21
@@ -15,11 +16,7 @@
 #define I2C_PORT_SDA_PIN 14
 #define I2C_PORT_SDL_PIN 15
 #define I2C_BAUD_RATE 100000
-#define STEPPER_PIN_A 2
-#define STEPPER_PIN_B 3
-#define STEPPER_PIN_C 6
-#define STEPPER_PIN_D 13
-#define OPTO_FORK_PIN 28
+
 
 enum State {
     WAIT = 0,
@@ -27,6 +24,8 @@ enum State {
     READY = 2,
     DISPENSING = 3
 } DispenserState;
+
+void init_all();
 
 int main() {
     init_all();

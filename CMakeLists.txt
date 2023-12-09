@@ -23,6 +23,7 @@ add_compile_options(
 # Tell CMake where to find the executable source file
 add_executable(${PROJECT_NAME} 
     src/main.c
+    src/stepper_motor.c
 )
 
 # Create map/bin/hex/uf2 files
