@@ -39,7 +39,7 @@ void rotate_motor(MotorSteps *motor_steps, bool reverse)
     sleep_ms(DELAY_MS);
 }
 
-void calibrate(MotorSteps *motor_steps, uint8_t *current_step, const int runs, int *steps_per_revolution)
+void calibrate(MotorSteps *motor_steps, const int runs)
 {
     printf("Calibrating...\n");
 
@@ -96,24 +96,24 @@ void calibrate(MotorSteps *motor_steps, uint8_t *current_step, const int runs, i
     }
 
     // Take the average of the values obtained during calibration runs
-    *steps_per_revolution = total_steps / runs;
+    motor_steps->steps_per_revolution = total_steps / runs;
 
-    printf("Calibration complete. Steps per revolution: %d\n", *steps_per_revolution);
+    printf("Calibration complete. Steps per revolution: %d\n", motor_steps->steps_per_revolution);
 }
 
-void run_motor(MotorSteps *motor_steps, uint8_t *current_step, int runs, int *steps_per_revolution)
+void run_motor(MotorSteps *motor_steps, int runs)
 {
     int run_steps;
 
     printf("Running...\n");
 
-    if (!*steps_per_revolution)
+    if (!motor_steps->steps_per_revolution)
     {
         printf("Warning! Device not calibrated. Defaulting to steps per revolution: %d\n", DEFAULT_STEPS_PER_REV);
         run_steps = runs * (DEFAULT_STEPS_PER_REV / 8);
     }
     else
-        run_steps = runs * (*steps_per_revolution / 8);
+        run_steps = runs * (motor_steps->steps_per_revolution / 8);
 
 
     for (int i = 0; i < run_steps; i++)
