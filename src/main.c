@@ -31,6 +31,7 @@ MotorSteps MOTOR_STEPS = {
 
 int main() {
     init_all();
+
     while (true)
     {
 
