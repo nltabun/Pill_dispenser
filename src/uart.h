@@ -5,6 +5,8 @@
 #ifndef UART_IRQ_UART_H
 #define UART_IRQ_UART_H
 
+#include "pico/stdlib.h"
+
 
 void uart_setup(int uart_nr, int tx_pin, int rx_pin, int speed);
 int uart_read(int uart_nr, uint8_t *buffer, int size);

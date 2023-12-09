@@ -18,7 +18,7 @@
 
 enum DispenserState
 {
-    WAIT = 0,
+    WAIT_FOR_BUTTON = 0,
     CALIBRATE = 1,
     READY = 2,
     DISPENSING = 3
@@ -41,19 +41,19 @@ int main()
          {0, 0, 1, 1}, // 5
          {0, 0, 0, 1}, // 6
          {1, 0, 0, 1}},  // 7
-        {0},
-        {0}
+        0,
+        0
     };
 
     init_all();
 
-    state = WAIT;
+    state = WAIT_FOR_BUTTON;
 
     while (true)
     {
         switch (state)
         {
-        case WAIT:
+        case WAIT_FOR_BUTTON:
             while (gpio_get(BUTTON_SW1))
             {
                 if (led_timer > 100)
@@ -66,10 +66,6 @@ int main()
                 sleep_ms(10);
             }
             gpio_put(LED_0, (led0 = false));
-
-
-
-
 
             while (!gpio_get(BUTTON_SW1))
                 sleep_ms(10);
@@ -86,10 +82,10 @@ int main()
             break;
         case DISPENSING:
             /* code */
-            state = WAIT;
+            state = WAIT_FOR_BUTTON;
             break;
         default:
-            state = WAIT;
+            state = WAIT_FOR_BUTTON;
             break;
         }
     }

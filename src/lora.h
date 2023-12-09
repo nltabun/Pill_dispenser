@@ -1,7 +1,7 @@
 #ifndef LORA_H
 #define LORA_H
 
-#include "uart.h"
+#include "../src/uart.h"
 #include "pico/stdlib.h"
 #include "string.h"
 #include "ctype.h"
@@ -23,7 +23,7 @@ enum Step
     WAIT,
     CONNECT,
     SEND_MSG
-} Step;
+};
 
 int read_string(char *response);
 void trim_response(char *response, int prefix_len, char *destination, char ignore_c);
