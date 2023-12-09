@@ -27,5 +27,5 @@ enum Step
 
 int read_string(char *response);
 void trim_response(char *response, int prefix_len, char *destination, char ignore_c);
-void lora_msg();
+void lora_msg(enum Step step);
 #endif
