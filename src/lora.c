@@ -27,7 +27,7 @@ void trim_response(char *response, int prefix_len, char *destination, char ignor
     destination[dest_idx] = '\0';
 }
 
-void lora_msg(enum Step, char msg[100])
+void lora_msg(char msg[100])
 {
     uart_setup(UART_NR, UART_TX_PIN, UART_RX_PIN, UART_BAUD_RATE);
     const char CMD_OK[] = "AT\r\n";
@@ -56,7 +56,7 @@ void lora_msg(enum Step, char msg[100])
                         response[pos] = '\0';
                         if (strstr(response, "OK") != NULL) {
                             printf("Connected to LoRa Module\n");
-                            current_step = SEND_MSG;
+                            current_step = MODE;
                         }
                     }
 
@@ -75,7 +75,10 @@ void lora_msg(enum Step, char msg[100])
 
                 if (pos > 0) {
                     response[pos] = '\0';
-                    current_step = APPKEY;
+                    if (strstr(response, "LWOTAA") != NULL) {
+                        printf("Connected to LoRa Module\n");
+                        current_step = APPKEY;
+                    }
                 } else {
                     printf("Module stopped responding\n");
                     current_step = CONNECT;
@@ -89,7 +92,10 @@ void lora_msg(enum Step, char msg[100])
 
                 if (pos > 0) {
                     response[pos] = '\0';
-                    current_step = CLASS;
+                    if (strstr(response, "APPKEY") != NULL) {
+                        printf("Connected to LoRa Module\n");
+                        current_step = CLASS;
+                    }
                 } else {
                     printf("Module stopped responding\n");
                     current_step = CONNECT;
@@ -106,7 +112,7 @@ void lora_msg(enum Step, char msg[100])
                     current_step = PORT;
                 } else {
                     printf("Module stopped responding\n");
-                    current_step = PORT;
+                    current_step = CONNECT;
                 }
                 break;
             case PORT:
@@ -117,7 +123,10 @@ void lora_msg(enum Step, char msg[100])
 
                 if (pos > 0) {
                     response[pos] = '\0';
-                    current_step = JOIN;
+                    if (strstr(response, "PORT") != NULL) {
+                        printf("Connected to LoRa Module\n");
+                        current_step = JOIN;
+                    }
                 } else {
                     printf("Module stopped responding\n");
                     current_step = CONNECT;
@@ -131,7 +140,10 @@ void lora_msg(enum Step, char msg[100])
 
                 if (pos > 0) {
                     response[pos] = '\0';
-                    current_step = SEND_MSG;
+                    if (strstr(response, "Done") != NULL) {
+                        printf("Connected to LoRa Module\n");
+                        current_step = SEND_MSG;
+                    }
                 } else {
                     printf("Module stopped responding\n");
                     current_step = CONNECT;
