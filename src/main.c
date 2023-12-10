@@ -2,8 +2,8 @@
 #include "pico/stdlib.h"
 #include "hardware/gpio.h"
 #include "hardware/i2c.h"
-#include "../src/stepper_motor.h"
-#include "../src/lora.h"
+#include "stepper_motor.h"
+#include "lora.h"
 
 #define LED_0 20
 #define LED_1 21
@@ -119,11 +119,13 @@ void init_all()
     gpio_init(STEPPER_PIN_B);
     gpio_init(STEPPER_PIN_C);
     gpio_init(STEPPER_PIN_D);
-    gpio_init(OPTO_FORK_PIN);
+
     gpio_set_dir(STEPPER_PIN_A, GPIO_OUT);
     gpio_set_dir(STEPPER_PIN_B, GPIO_OUT);
     gpio_set_dir(STEPPER_PIN_C, GPIO_OUT);
     gpio_set_dir(STEPPER_PIN_D, GPIO_OUT);
+
+    gpio_init(OPTO_FORK_PIN);
     gpio_set_dir(OPTO_FORK_PIN, GPIO_IN);
     gpio_pull_up(OPTO_FORK_PIN);
 }

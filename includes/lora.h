@@ -1,7 +1,7 @@
 #ifndef LORA_H
 #define LORA_H
 
-#include "../src/uart.h"
+#include "uart.h"
 #include "pico/stdlib.h"
 #include "string.h"
 #include "ctype.h"
