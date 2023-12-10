@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "pico/stdlib.h"
-#include "../src/stepper_motor.h"
-#include "../src/lora.h"
+#include "stepper_motor.h"
+#include "lora.h"
 
 #define LED_0 20
 #define LED_1 21
@@ -30,10 +30,12 @@ MotorSteps MOTOR_STEPS = {
 };
 
 int main() {
+    char msg[] = "AT+MSG=toimii\r\n";
     init_all();
+    calibrate(&MOTOR_STEPS, 1);
+    lora_msg(msg);
     while (true)
     {
-
     }
 }
 
