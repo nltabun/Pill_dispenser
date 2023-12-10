@@ -32,10 +32,10 @@ void lora_msg(char msg[100])
     uart_setup(UART_NR, UART_TX_PIN, UART_RX_PIN, UART_BAUD_RATE);
     const char CMD_OK[] = "AT\r\n";
     const char CMD_MODE[] = "AT+MODE=LWOTAA\r\n";
-    const char CMD_APPKEY[] = "AT+KEY=APPKEY,\"e06716984de834e2a38a779b9cd2def3\"";
-    const char CMD_CLASS[] = "AT+CLASS=A";
-    const char CMD_PORT[] = "AT+PORT=8";
-    const char CMD_JOIN[] = "AT+JOIN";
+    const char CMD_APPKEY[] = "AT+KEY=APPKEY,\"e06716984de834e2a38a779b9cd2def3\"\r\n";
+    const char CMD_CLASS[] = "AT+CLASS=A\r\n";
+    const char CMD_PORT[] = "AT+PORT=8\r\n";
+    const char CMD_JOIN[] = "AT+JOIN\r\n";
     const char CMD_MSG[] = "AT+MSG=\" msg \"";
     char response[RESP_LEN];
     int attempts = 0;
