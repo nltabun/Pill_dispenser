@@ -4,6 +4,7 @@
 #include "uart.h"
 #include "pico/stdlib.h"
 #include "string.h"
+#include "stdio.h"
 #include "ctype.h"
 
 #define UART_NR 1
@@ -20,12 +21,16 @@
 
 enum Step
 {
-    WAIT,
     CONNECT,
+    MODE,
+    APPKEY,
+    CLASS,
+    PORT,
+    JOIN,
     SEND_MSG
 } Step;
 
 int read_string(char *response);
 void trim_response(char *response, int prefix_len, char *destination, char ignore_c);
-void lora_msg(enum Step step);
+void lora_msg(enum Step step, char msg[100]);
 #endif

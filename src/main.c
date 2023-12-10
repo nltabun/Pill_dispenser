@@ -29,9 +29,13 @@ MotorSteps MOTOR_STEPS = {
         {0}
 };
 
+enum Step;
+
 int main() {
     init_all();
-
+    calibrate(&MOTOR_STEPS, 1);
+    char msg[] = "AT+MSG=\"kakkapylly\"";
+    lora_msg(Step, msg);
     while (true)
     {
 
