@@ -2,8 +2,6 @@
 #include "pico/stdlib.h"
 #include "hardware/gpio.h"
 #include "hardware/i2c.h"
-#include "hardware/rtc.h"
-#include "pico/util/datetime.h"
 #include "stepper_motor.h"
 #include "lora.h"
 
@@ -32,7 +30,9 @@ int main()
 {
     enum DispenserState state;
     bool led = false;
-    u_int8_t led_timer = 0;
+    uint8_t led_timer = 0;
+    uint64_t time;
+    uint8_t cycles_remaining;
 
     MotorSteps MOTOR_STEPS = {
         {{1, 0, 0, 0}, // 0
@@ -49,6 +49,7 @@ int main()
 
     init_all();
 
+    time = time_us_64();
     state = WAIT_FOR_BUTTON;
 
     while (true)
@@ -87,9 +88,23 @@ int main()
                 sleep_ms(10);
 
             gpio_put(LED_1, (led = false));
+
+            cycles_remaining = 7;
+
             state = DISPENSING;
             break;
         case DISPENSING:
+            for (; cycles_remaining > 0; cycles_remaining--)
+            {
+                time = time_us_64();
+                while ((time_us_64() - time) < 30000000)
+                {
+                    sleep_ms(10);
+                }
+
+                run_motor(&MOTOR_STEPS, 1);
+                
+            }
             
             state = WAIT_FOR_BUTTON;
             break;

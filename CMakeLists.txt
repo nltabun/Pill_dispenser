@@ -38,7 +38,6 @@ target_link_libraries(${PROJECT_NAME}
     hardware_pwm
     hardware_gpio
     hardware_i2c
-    hardware_rtc
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE "includes/")
