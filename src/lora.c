@@ -1,5 +1,5 @@
-#include "../src/lora.h"
-#include "../src/uart.h"
+#include "lora.h"
+#include "uart.h"
 
 int read_string(char *response)
 {
