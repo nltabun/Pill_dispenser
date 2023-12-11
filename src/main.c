@@ -14,10 +14,10 @@
 
 enum DispenserState
 {
-    WAIT_FOR_BUTTON = 0,
-    CALIBRATE = 1,
-    READY = 2,
-    DISPENSING = 3
+    WAIT_FOR_CALIBRATION = 0,
+    CALIBRATING,
+    READY_TO_START,
+    DISPENSING
 };
 
 void init_all(void);
@@ -34,28 +34,38 @@ int main(void)
     bool pill_dispensed;
 
     MotorSteps MOTOR_STEPS = {
-        {{1, 0, 0, 0}, // 0
-         {1, 1, 0, 0}, // 1
-         {0, 1, 0, 0}, // 2
-         {0, 1, 1, 0}, // 3
-         {0, 0, 1, 0}, // 4
-         {0, 0, 1, 1}, // 5
-         {0, 0, 0, 1}, // 6
-         {1, 0, 0, 1}},  // 7
+        {{1, 0, 0, 0},  // 0
+         {1, 1, 0, 0},  // 1
+         {0, 1, 0, 0},  // 2
+         {0, 1, 1, 0},  // 3
+         {0, 0, 1, 0},  // 4
+         {0, 0, 1, 1},  // 5
+         {0, 0, 0, 1},  // 6
+         {1, 0, 0, 1}}, // 7
         0,
-        0
-    };
+        0};
 
     init_all();
 
-    time = time_us_64();
-    state = WAIT_FOR_BUTTON;
+    // lora_msg("Booting up...");
+
+    if (load_state_from_eeprom(&state, &cycles_remaining))
+    {
+        printf("Loaded state: %d\n", state);
+        // lora_msg("Dispenser state successfully loaded");
+    }
+    else
+    {
+        printf("No valid dispenser state found\n");
+        // lora_msg("No valid dispenser state found");
+    }
+    
 
     while (true)
     {
         switch (state)
         {
-        case WAIT_FOR_BUTTON:
+        case WAIT_FOR_CALIBRATION:
             while (gpio_get(BUTTON_SW1))
             {
                 if (led_timer > 100)
@@ -72,28 +82,28 @@ int main(void)
             while (!gpio_get(BUTTON_SW1))
                 sleep_ms(10);
             sleep_ms(100);
-            state = CALIBRATE;
-            break;
-        case CALIBRATE:
+            state = CALIBRATING;
+            save_state_to_eeprom(&state, 0);
+        case CALIBRATING:
             calibrate(&MOTOR_STEPS, 1);
-            state = READY;
-            break;
-        case READY:
+            // lora_msg("Calibrated");
+            state = READY_TO_START;
+            save_state_to_eeprom(&state, 0);
+        case READY_TO_START:
             gpio_put(LED_1, (led = true));
             while (gpio_get(BUTTON_SW1))
-                sleep_ms(10);   
+                sleep_ms(10);
 
             while (!gpio_get(BUTTON_SW1))
                 sleep_ms(10);
 
             gpio_put(LED_1, (led = false));
 
-            cycles_remaining = 7;
-
             state = DISPENSING;
-            break;
+            cycles_remaining = 7;
+            save_state_to_eeprom(&state, &cycles_remaining);
         case DISPENSING:
-            for (; cycles_remaining > 0; cycles_remaining--)
+            while (cycles_remaining > 0)
             {
                 time = time_us_64();
                 while ((time_us_64() - time) < 30000000)
@@ -102,22 +112,27 @@ int main(void)
                 }
 
                 turn_dispenser(&MOTOR_STEPS, 1, &pill_dispensed);
+                cycles_remaining--;
+                save_state_to_eeprom(&state, &cycles_remaining);
 
                 if (pill_dispensed)
                 {
                     printf("Pill dispensed!\n");
+                    // lora_msg("Pill dispensed!");
                 }
                 else
                 {
                     printf("Pill not dispensed!\n");
+                    // lora_msg("Pill not dispensed!");
                 }
-                
             }
-            
-            state = WAIT_FOR_BUTTON;
+
+            state = WAIT_FOR_CALIBRATION;
+            save_state_to_eeprom(&state, 0);
             break;
         default:
-            state = WAIT_FOR_BUTTON;
+            state = WAIT_FOR_CALIBRATION;
+            save_state_to_eeprom(&state, 0);
             break;
         }
     }
@@ -131,6 +146,7 @@ void init_all(void)
     motor_setup();
     opto_fork_setup();
     piezo_sensor_setup();
+    i2c_setup();
 }
 
 void led_setup(void)
@@ -158,4 +174,3 @@ void button_setup(void)
     gpio_pull_up(BUTTON_SW1);
     gpio_pull_up(BUTTON_SW2);
 }
-
