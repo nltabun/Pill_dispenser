@@ -12,7 +12,7 @@
 #define BUTTON_SW0 9
 #define BUTTON_SW1 8
 #define BUTTON_SW2 7
-
+#define PIEZO_SENSOR_PIN 27
 
 enum DispenserState
 {
@@ -125,7 +125,9 @@ void init_all(void)
 
     motor_setup();
 
-
+    gpio_init(PIEZO_SENSOR_PIN);
+    gpio_set_dir(PIEZO_SENSOR_PIN, GPIO_IN);
+    gpio_pull_up(PIEZO_SENSOR_PIN);
 }
 
 void led_setup(void)
