@@ -15,6 +15,7 @@
 #define I2C_PORT_SDA_PIN 14
 #define I2C_PORT_SDL_PIN 15
 #define I2C_BAUD_RATE 100000
+#define PIEZO_SENSOR_PIN 27
 
 enum DispenserState
 {
@@ -152,4 +153,9 @@ void init_all()
     gpio_init(OPTO_FORK_PIN);
     gpio_set_dir(OPTO_FORK_PIN, GPIO_IN);
     gpio_pull_up(OPTO_FORK_PIN);
+
+    gpio_init(PIEZO_SENSOR_PIN);
+    gpio_set_dir(PIEZO_SENSOR_PIN, GPIO_IN);
+    gpio_pull_up(PIEZO_SENSOR_PIN);
+
 }
