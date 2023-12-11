@@ -4,6 +4,7 @@
 #include "hardware/i2c.h"
 #include "stepper_motor.h"
 #include "lora.h"
+#include "eeprom.h"
 
 #define LED_0 20
 #define LED_1 21
@@ -11,10 +12,6 @@
 #define BUTTON_SW0 9
 #define BUTTON_SW1 8
 #define BUTTON_SW2 7
-#define I2C_PORT i2c1
-#define I2C_PORT_SDA_PIN 14
-#define I2C_PORT_SDL_PIN 15
-#define I2C_BAUD_RATE 100000
 #define PIEZO_SENSOR_PIN 27
 
 enum DispenserState
@@ -25,9 +22,11 @@ enum DispenserState
     DISPENSING = 3
 };
 
-void init_all();
+void init_all(void);
+void led_setup(void);
+void button_setup(void);
 
-int main()
+int main(void)
 {
     enum DispenserState state;
     bool led = false;
@@ -116,10 +115,23 @@ int main()
     }
 }
 
-void init_all()
+void init_all(void)
 {
     stdio_init_all();
 
+    led_setup();
+
+    button_setup();
+
+    motor_setup();
+
+    gpio_init(PIEZO_SENSOR_PIN);
+    gpio_set_dir(PIEZO_SENSOR_PIN, GPIO_IN);
+    gpio_pull_up(PIEZO_SENSOR_PIN);
+}
+
+void led_setup(void)
+{
     gpio_init(LED_0);
     gpio_init(LED_1);
     gpio_init(LED_2);
@@ -127,7 +139,10 @@ void init_all()
     gpio_set_dir(LED_0, GPIO_OUT);
     gpio_set_dir(LED_1, GPIO_OUT);
     gpio_set_dir(LED_2, GPIO_OUT);
+}
 
+void button_setup(void)
+{
     gpio_init(BUTTON_SW0);
     gpio_init(BUTTON_SW1);
     gpio_init(BUTTON_SW2);
@@ -139,23 +154,4 @@ void init_all()
     gpio_pull_up(BUTTON_SW0);
     gpio_pull_up(BUTTON_SW1);
     gpio_pull_up(BUTTON_SW2);
-
-    gpio_init(STEPPER_PIN_A);
-    gpio_init(STEPPER_PIN_B);
-    gpio_init(STEPPER_PIN_C);
-    gpio_init(STEPPER_PIN_D);
-
-    gpio_set_dir(STEPPER_PIN_A, GPIO_OUT);
-    gpio_set_dir(STEPPER_PIN_B, GPIO_OUT);
-    gpio_set_dir(STEPPER_PIN_C, GPIO_OUT);
-    gpio_set_dir(STEPPER_PIN_D, GPIO_OUT);
-
-    gpio_init(OPTO_FORK_PIN);
-    gpio_set_dir(OPTO_FORK_PIN, GPIO_IN);
-    gpio_pull_up(OPTO_FORK_PIN);
-
-    gpio_init(PIEZO_SENSOR_PIN);
-    gpio_set_dir(PIEZO_SENSOR_PIN, GPIO_IN);
-    gpio_pull_up(PIEZO_SENSOR_PIN);
-
 }

@@ -115,11 +115,30 @@ void run_motor(MotorSteps *motor_steps, int runs)
     else
         run_steps = runs * (motor_steps->steps_per_revolution / 8);
 
-
     for (int i = 0; i < run_steps; i++)
     {
-        rotate_motor(motor_steps, false); 
+        rotate_motor(motor_steps, false);
     }
 
     printf("Motor ran %d times\n", runs);
+}
+
+void motor_setup(void)
+{
+    gpio_init(STEPPER_PIN_A);
+    gpio_init(STEPPER_PIN_B);
+    gpio_init(STEPPER_PIN_C);
+    gpio_init(STEPPER_PIN_D);
+
+    gpio_set_dir(STEPPER_PIN_A, GPIO_OUT);
+    gpio_set_dir(STEPPER_PIN_B, GPIO_OUT);
+    gpio_set_dir(STEPPER_PIN_C, GPIO_OUT);
+    gpio_set_dir(STEPPER_PIN_D, GPIO_OUT);
+}
+
+void opto_fork_setup(void)
+{
+    gpio_init(OPTO_FORK_PIN);
+    gpio_set_dir(OPTO_FORK_PIN, GPIO_IN);
+    gpio_pull_up(OPTO_FORK_PIN);
 }
