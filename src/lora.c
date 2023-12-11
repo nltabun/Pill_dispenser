@@ -36,23 +36,45 @@ void lora_msg(char *msg)
     const char CMD_CLASS[] = "AT+CLASS=A\r\n";
     const char CMD_PORT[] = "AT+PORT=8\r\n";
     const char CMD_JOIN[] = "AT+JOIN\r\n";
-    const char CMD_MSG[] = "AT+MSG=\" msg \"";
     char response[RESP_LEN];
     int attempts = 0;
-    int pos = 0;
+    int pos;
+    int function_done = 0;
     bool done = false;
 
     enum Step current_step;
     current_step = CONNECT;
 
-    for (int i = 0; i < 7; ++i)
-    {
+    do {
         switch (current_step)
         {
-        case CONNECT:
-            while (attempts < MAX_ATTEMPTS && current_step == CONNECT)
-            {
-                uart_send(UART_NR, CMD_OK);
+            case CONNECT:
+                while (attempts < MAX_ATTEMPTS && current_step == CONNECT)
+                {
+                    uart_send(UART_NR, CMD_OK);
+                    sleep_ms(500);
+
+                    pos = read_string(response);
+
+                    if (pos > 0)
+                    {
+                        response[pos] = '\0';
+                        if (strstr(response, "OK") != NULL)
+                        {
+                            current_step = MODE;
+                        }
+                    }
+
+                    attempts++;
+                    if (attempts >= MAX_ATTEMPTS)
+                    {
+                        printf("Module stopped responding\n");
+                        function_done = 1;
+                    }
+                }
+                break;
+            case MODE:
+                uart_send(UART_NR, CMD_MODE);
                 sleep_ms(500);
 
                 pos = read_string(response);
@@ -60,105 +82,19 @@ void lora_msg(char *msg)
                 if (pos > 0)
                 {
                     response[pos] = '\0';
-                    if (strstr(response, "OK") != NULL)
+                    if (strstr(response, "LWOTAA") != NULL)
                     {
-                        printf("Connected to LoRa Module\n");
-                        current_step = MODE;
+                        current_step = APPKEY;
                     }
                 }
-
-                attempts++;
-                if (attempts >= MAX_ATTEMPTS)
+                else
                 {
-                    printf("Module not responding\n");
-                    current_step = CONNECT;
+                    printf("Module stopped responding\n");
+                    function_done = 1;
                 }
-            }
-            break;
-        case MODE:
-            uart_send(UART_NR, CMD_MODE);
-            sleep_ms(500);
-
-            pos = read_string(response);
-
-            if (pos > 0)
-            {
-                response[pos] = '\0';
-                if (strstr(response, "LWOTAA") != NULL)
-                {
-                    printf("LWOTAA\n");
-                    current_step = APPKEY;
-                }
-            }
-            else
-            {
-                printf("Module stopped responding\n");
-                current_step = CONNECT;
-            }
-            break;
-        case APPKEY:
-            uart_send(UART_NR, CMD_APPKEY);
-            sleep_ms(500);
-
-            pos = read_string(response);
-
-            if (pos > 0)
-            {
-                response[pos] = '\0';
-                if (strstr(response, "APPKEY") != NULL)
-                {
-                    printf("AppKey\n");
-                    current_step = CLASS;
-                }
-            }
-            else
-            {
-                printf("Module stopped responding\n");
-                current_step = CONNECT;
-            }
-            break;
-        case CLASS:
-            uart_send(UART_NR, CMD_CLASS);
-            sleep_ms(500);
-
-            pos = read_string(response);
-
-            if (pos > 0)
-            {
-                response[pos] = '\0';
-                current_step = PORT;
-            }
-            else
-            {
-                printf("Module stopped responding\n");
-                current_step = CONNECT;
-            }
-            break;
-        case PORT:
-            uart_send(UART_NR, CMD_PORT);
-            sleep_ms(500);
-
-            pos = read_string(response);
-
-            if (pos > 0)
-            {
-                response[pos] = '\0';
-                if (strstr(response, "PORT") != NULL)
-                {
-                    printf("Port\n");
-                    current_step = JOIN;
-                }
-            }
-            else
-            {
-                printf("Module stopped responding\n");
-                current_step = CONNECT;
-            }
-            break;
-        case JOIN:
-            while (!done)
-            {
-                uart_send(UART_NR, CMD_JOIN);
+                break;
+            case APPKEY:
+                uart_send(UART_NR, CMD_APPKEY);
                 sleep_ms(500);
 
                 pos = read_string(response);
@@ -166,51 +102,109 @@ void lora_msg(char *msg)
                 if (pos > 0)
                 {
                     response[pos] = '\0';
-                    printf("Response: %s\n", response);
-
-                    if (strstr(response, "Done") != NULL)
+                    if (strstr(response, "APPKEY") != NULL)
                     {
-                        printf("Connected to LoRa Module\n");
-                        current_step = SEND_MSG;
-                        done = true;
-                    }
-                    else if (strstr(response, "failed") != NULL)
-                    {
-                        printf("Failed to connect to LoRa Module\n");
-                        done = true;
+                        current_step = CLASS;
                     }
                 }
                 else
                 {
                     printf("Module stopped responding\n");
-                    current_step = CONNECT;
+                    function_done = 1;
                 }
-            }
+                break;
+            case CLASS:
+                uart_send(UART_NR, CMD_CLASS);
+                sleep_ms(500);
 
-            break;
-        case SEND_MSG:
-            uart_send(UART_NR, msg);
-            sleep_ms(500);
-
-            for (int i = 0; i < 3; ++i)
-            {
                 pos = read_string(response);
 
                 if (pos > 0)
                 {
                     response[pos] = '\0';
-                    printf("The message: %s", response);
+                    current_step = PORT;
                 }
                 else
                 {
                     printf("Module stopped responding\n");
-                    current_step = 1;
+                    function_done = 1;
                 }
-            }
-            break;
-        default:
-            current_step = CONNECT;
-            break;
+                break;
+            case PORT:
+                uart_send(UART_NR, CMD_PORT);
+                sleep_ms(500);
+
+                pos = read_string(response);
+
+                if (pos > 0)
+                {
+                    response[pos] = '\0';
+                    if (strstr(response, "PORT") != NULL)
+                    {
+                        current_step = JOIN;
+                    }
+                }
+                else
+                {
+                    printf("Module stopped responding\n");
+                    function_done = 1;
+                }
+                break;
+            case JOIN:
+                while (!done)
+                {
+                    uart_send(UART_NR, CMD_JOIN);
+                    sleep_ms(500);
+
+                    pos = read_string(response);
+
+                    if (pos > 0)
+                    {
+                        response[pos] = '\0';
+                        printf("Response: %s\n", response);
+
+                        if (strstr(response, "Done") != NULL)
+                        {
+                            current_step = SEND_MSG;
+                            done = true;
+                        }
+                        else if (strstr(response, "failed") != NULL)
+                        {
+                            printf("Failed to connect to LoRa Module\n");
+                            done = true;
+                        }
+                    }
+                    else
+                    {
+                        printf("Module stopped responding\n");
+                        function_done = 1;
+                    }
+                }
+
+                break;
+            case SEND_MSG:
+                do {
+                    uart_send(UART_NR, msg);
+                    sleep_ms(500);
+                    pos = read_string(response);
+
+                    if (pos > 0)
+                    {
+                        response[pos] = '\0';
+                        printf("%s \n", response);
+                    }
+                    else
+                    {
+                        printf("Module stopped responding\n");
+                    }
+                } while (strstr(response, "Done") != NULL);
+
+                function_done = 1;
+                break;
+            default:
+                current_step = CONNECT;
+                break;
         }
-    }
+    } while(function_done != 1);
+
 }
