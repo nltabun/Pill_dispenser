@@ -12,7 +12,7 @@
 #define UART_RX_PIN 5
 #define UART_BAUD_RATE 9600
 
-#define RESP_LEN 100
+#define RESP_LEN 200
 #define FW_VER_LEN 10
 #define DEVEUI_LEN 23
 #define DEVEUI_OFFSET 12
@@ -32,5 +32,5 @@ enum Step
 
 int read_string(char *response);
 void trim_response(char *response, int prefix_len, char *destination, char ignore_c);
-void lora_msg(char msg[100]);
+void lora_msg(char *msg);
 #endif

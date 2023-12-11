@@ -30,9 +30,9 @@ MotorSteps MOTOR_STEPS = {
 };
 
 int main() {
-    char msg[] = "AT+MSG=toimii\r\n";
+    char msg[] = "AT+MSG=\"toimii\"\r\n";
     init_all();
-    calibrate(&MOTOR_STEPS, 1);
+    // calibrate(&MOTOR_STEPS, 1);
     lora_msg(msg);
     while (true)
     {
