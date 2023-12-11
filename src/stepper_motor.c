@@ -101,7 +101,7 @@ void calibrate(MotorSteps *motor_steps, const int runs)
     printf("Calibration complete. Steps per revolution: %d\n", motor_steps->steps_per_revolution);
 }
 
-void run_motor(MotorSteps *motor_steps, int runs)
+void turn_dispenser(MotorSteps *motor_steps, int turns, bool *pill_dispensed)
 {
     int run_steps;
 
@@ -110,16 +110,48 @@ void run_motor(MotorSteps *motor_steps, int runs)
     if (!motor_steps->steps_per_revolution)
     {
         printf("Warning! Device not calibrated. Defaulting to steps per revolution: %d\n", DEFAULT_STEPS_PER_REV);
-        run_steps = runs * (DEFAULT_STEPS_PER_REV / 8);
+        run_steps = turns * (DEFAULT_STEPS_PER_REV / 8);
     }
     else
-        run_steps = runs * (motor_steps->steps_per_revolution / 8);
+        run_steps = turns * (motor_steps->steps_per_revolution / 8);
 
-
+    *pill_dispensed = false;    
     for (int i = 0; i < run_steps; i++)
     {
-        rotate_motor(motor_steps, false); 
+        rotate_motor(motor_steps, false);
+        if (!gpio_get(PIEZO_SENSOR_PIN))
+        {
+            *pill_dispensed = true;
+        }
+        
     }
 
-    printf("Motor ran %d times\n", runs);
+    printf("Motor turned dispenser %d time(s)\n", turns);
+}
+
+void motor_setup(void)
+{
+    gpio_init(STEPPER_PIN_A);
+    gpio_init(STEPPER_PIN_B);
+    gpio_init(STEPPER_PIN_C);
+    gpio_init(STEPPER_PIN_D);
+
+    gpio_set_dir(STEPPER_PIN_A, GPIO_OUT);
+    gpio_set_dir(STEPPER_PIN_B, GPIO_OUT);
+    gpio_set_dir(STEPPER_PIN_C, GPIO_OUT);
+    gpio_set_dir(STEPPER_PIN_D, GPIO_OUT);
+}
+
+void opto_fork_setup(void)
+{
+    gpio_init(OPTO_FORK_PIN);
+    gpio_set_dir(OPTO_FORK_PIN, GPIO_IN);
+    gpio_pull_up(OPTO_FORK_PIN);
+}
+
+void piezo_sensor_setup(void)
+{
+    gpio_init(PIEZO_SENSOR_PIN);
+    gpio_set_dir(PIEZO_SENSOR_PIN, GPIO_IN);
+    gpio_pull_up(PIEZO_SENSOR_PIN);
 }
