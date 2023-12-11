@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include "pico/stdlib.h"
 #include "hardware/gpio.h"
-#include "hardware/i2c.h"
 #include "stepper_motor.h"
 #include "lora.h"
 #include "eeprom.h"
@@ -118,16 +117,11 @@ int main(void)
 void init_all(void)
 {
     stdio_init_all();
-
     led_setup();
-
     button_setup();
-
     motor_setup();
-
-    gpio_init(PIEZO_SENSOR_PIN);
-    gpio_set_dir(PIEZO_SENSOR_PIN, GPIO_IN);
-    gpio_pull_up(PIEZO_SENSOR_PIN);
+    opto_fork_setup();
+    piezo_sensor_setup();
 }
 
 void led_setup(void)
@@ -154,4 +148,11 @@ void button_setup(void)
     gpio_pull_up(BUTTON_SW0);
     gpio_pull_up(BUTTON_SW1);
     gpio_pull_up(BUTTON_SW2);
+}
+
+void piezo_sensor_setup(void)
+{
+    gpio_init(PIEZO_SENSOR_PIN);
+    gpio_set_dir(PIEZO_SENSOR_PIN, GPIO_IN);
+    gpio_pull_up(PIEZO_SENSOR_PIN);
 }
