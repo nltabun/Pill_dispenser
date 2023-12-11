@@ -11,7 +11,6 @@
 #define BUTTON_SW0 9
 #define BUTTON_SW1 8
 #define BUTTON_SW2 7
-#define PIEZO_SENSOR_PIN 27
 
 enum DispenserState
 {
@@ -32,6 +31,7 @@ int main(void)
     uint8_t led_timer = 0;
     uint64_t time;
     uint8_t cycles_remaining;
+    bool pill_dispensed;
 
     MotorSteps MOTOR_STEPS = {
         {{1, 0, 0, 0}, // 0
@@ -101,7 +101,16 @@ int main(void)
                     sleep_ms(10);
                 }
 
-                run_motor(&MOTOR_STEPS, 1);
+                turn_dispenser(&MOTOR_STEPS, 1, &pill_dispensed);
+
+                if (pill_dispensed)
+                {
+                    printf("Pill dispensed!\n");
+                }
+                else
+                {
+                    printf("Pill not dispensed!\n");
+                }
                 
             }
             
@@ -150,9 +159,3 @@ void button_setup(void)
     gpio_pull_up(BUTTON_SW2);
 }
 
-void piezo_sensor_setup(void)
-{
-    gpio_init(PIEZO_SENSOR_PIN);
-    gpio_set_dir(PIEZO_SENSOR_PIN, GPIO_IN);
-    gpio_pull_up(PIEZO_SENSOR_PIN);
-}
