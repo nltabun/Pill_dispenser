@@ -25,6 +25,7 @@ add_executable(${PROJECT_NAME}
     src/main.c
     src/stepper_motor.c
     src/lora.c
+    src/eeprom.c
     src/uart.c
     src/ring_buffer.c
 )
