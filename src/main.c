@@ -30,6 +30,7 @@ MotorSteps MOTOR_STEPS = {
 };
 
 int main() {
+    sleep_ms(2000);
     char msg[] = "AT+MSG=\"toimii\"\r\n";
     init_all();
     // calibrate(&MOTOR_STEPS, 1);
