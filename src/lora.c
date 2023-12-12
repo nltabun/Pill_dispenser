@@ -31,7 +31,6 @@ void lora_msg(char *msg)
         {
             case CONNECT:
                 result = Connect(attempts, pos, response, current_step);
-
                 if (result == 1)
                     current_step = MODE;
                 else
@@ -39,7 +38,6 @@ void lora_msg(char *msg)
                 break;
             case MODE:
                 result = mode(pos, response);
-
                 if (result == 1)
                     current_step = APPKEY;
                 else
@@ -47,7 +45,6 @@ void lora_msg(char *msg)
                 break;
             case APPKEY:
                 result = appkey(pos, response);
-
                 if (result == 1)
                     current_step = CLASS;
                 else
@@ -55,7 +52,6 @@ void lora_msg(char *msg)
                 break;
             case CLASS:
                 result = class(pos, response);
-
                 if (result == 1)
                     current_step = PORT;
                 else
@@ -63,7 +59,6 @@ void lora_msg(char *msg)
                 break;
             case PORT:
                 result = port(pos, response);
-
                 if (result == 1)
                     current_step = JOIN;
                 else
@@ -71,7 +66,6 @@ void lora_msg(char *msg)
                 break;
             case JOIN:
                 result = join(pos, response);
-
                 if (result == 1)
                     current_step = SEND_MSG;
                 else
