@@ -174,3 +174,4 @@ void button_setup(void)
     gpio_pull_up(BUTTON_SW1);
     gpio_pull_up(BUTTON_SW2);
 }
+
