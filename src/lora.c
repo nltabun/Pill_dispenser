@@ -13,18 +13,79 @@ int read_string(char *response)
     return 0;
 }
 
-void trim_response(char *response, int prefix_len, char *destination, char ignore_c)
+void lora_msg(char *msg)
 {
-    int dest_idx = 0;
-    for (int resp_idx = 0; resp_idx < DEVEUI_LEN; resp_idx++)
-    {
-        if (response[resp_idx + prefix_len] != ignore_c)
+
+    uart_setup(UART_NR, UART_TX_PIN, UART_RX_PIN, UART_BAUD_RATE);
+    enum Step current_step;
+    char response[RESP_LEN];
+    int attempts = 0;
+    int pos;
+    int function_done = 0;
+    int result;
+    current_step = CONNECT;
+
+    do {
+        pos = 0;
+        switch (current_step)
         {
-            destination[dest_idx] = tolower(response[resp_idx + prefix_len]);
-            dest_idx++;
+            case CONNECT:
+                result = Connect(attempts, pos, response, current_step);
+
+                if (result == 1)
+                    current_step = MODE;
+                else
+                    function_done = 1;
+                break;
+            case MODE:
+                result = mode(pos, response);
+
+                if (result == 1)
+                    current_step = APPKEY;
+                else
+                    function_done = 1;
+                break;
+            case APPKEY:
+                result = appkey(pos, response);
+
+                if (result == 1)
+                    current_step = CLASS;
+                else
+                    function_done = 1;
+                break;
+            case CLASS:
+                result = class(pos, response);
+
+                if (result == 1)
+                    current_step = PORT;
+                else
+                    function_done = 1;
+                break;
+            case PORT:
+                result = port(pos, response);
+
+                if (result == 1)
+                    current_step = JOIN;
+                else
+                    function_done = 1;
+                break;
+            case JOIN:
+                result = join(pos, response);
+
+                if (result == 1)
+                    current_step = SEND_MSG;
+                else
+                    function_done = 1;
+                break;
+            case SEND_MSG:
+                message(msg, pos, response);
+                function_done = 1;
+                break;
+            default:
+                current_step = CONNECT;
+                break;
         }
-    }
-    destination[dest_idx] = '\0';
+    } while(function_done != 1);
 }
 
 int Connect(int attempts, int pos, char *response, enum Step current_step)
@@ -51,6 +112,7 @@ int Connect(int attempts, int pos, char *response, enum Step current_step)
             printf("Module stopped responding\n");
             return 2;
         }
+        return 2;
     }
 }
 
@@ -168,7 +230,7 @@ int join(int pos, char *response)
     }
 }
 
-int message(char *msg, int pos, char *response)
+void message(char *msg, int pos, char *response)
 {
     uart_send(UART_NR, msg);
     sleep_ms(5000);
@@ -183,79 +245,4 @@ int message(char *msg, int pos, char *response)
     {
         printf("Module stopped responding\n");
     }
-}
-void lora_msg(char *msg)
-{
-
-    uart_setup(UART_NR, UART_TX_PIN, UART_RX_PIN, UART_BAUD_RATE);
-    enum Step current_step;
-    char response[RESP_LEN];
-    int attempts = 0;
-    int pos;
-    int function_done = 0;
-    int result;
-
-    current_step = CONNECT;
-
-    do {
-        result = 0;
-        switch (current_step)
-        {
-            case CONNECT:
-                result = Connect(attempts, pos, response, current_step);
-
-                if (result == 1)
-                    current_step = MODE;
-                else
-                    function_done = 1;
-                break;
-            case MODE:
-                result = mode(pos, response);
-
-                if (result == 1)
-                    current_step = APPKEY;
-                else
-                    function_done = 1;
-                break;
-            case APPKEY:
-                result = appkey(pos, response);
-
-                if (result == 1)
-                    current_step = CLASS;
-                else
-                    function_done = 1;
-                break;
-            case CLASS:
-                result = class(pos, response);
-
-                if (result == 1)
-                    current_step = PORT;
-                else
-                    function_done = 1;
-                break;
-            case PORT:
-                result = port(pos, response);
-
-                if (result == 1)
-                    current_step = JOIN;
-                else
-                    function_done = 1;
-                break;
-            case JOIN:
-                result = join(pos, response);
-
-                if (result == 1)
-                    current_step = SEND_MSG;
-                else
-                    function_done = 1;
-                break;
-            case SEND_MSG:
-                message(msg, pos, response);
-                function_done = 1;
-                break;
-            default:
-                current_step = CONNECT;
-                break;
-        }
-    } while(function_done != 1);
 }
