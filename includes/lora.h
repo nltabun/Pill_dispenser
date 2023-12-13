@@ -26,13 +26,13 @@ enum Step
 };
 
 int read_string(char *response);
-void lora_msg(char *msg);
+void lora_connect();
 int Connect(int attempts, int pos, char *response, enum Step current_step);
 int mode(int pos, char *response);
 int appkey(int pos, char *response);
 int class(int pos, char *response);
 int port(int pos, char *response);
 int join(int pos, char *response);
-void message(char *msg, int pos, char *response);
+void lora_msg(char *msg);
 
 #endif

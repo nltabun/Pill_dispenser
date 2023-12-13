@@ -13,9 +13,8 @@ int read_string(char *response)
     return 0;
 }
 
-void lora_msg(char *msg)
+void lora_connect()
 {
-
     uart_setup(UART_NR, UART_TX_PIN, UART_RX_PIN, UART_BAUD_RATE);
     enum Step current_step;
     char response[RESP_LEN];
@@ -65,14 +64,7 @@ void lora_msg(char *msg)
                     function_done = 1;
                 break;
             case JOIN:
-                result = join(pos, response);
-                if (result == 1)
-                    current_step = SEND_MSG;
-                else
-                    function_done = 1;
-                break;
-            case SEND_MSG:
-                message(msg, pos, response);
+                join(pos, response);
                 function_done = 1;
                 break;
             default:
@@ -96,6 +88,7 @@ int Connect(int attempts, int pos, char *response, enum Step current_step)
             response[pos] = '\0';
             if (strstr(response, "OK") != NULL)
             {
+                printf("%s \n", response);
                 return 1;
             }
         }
@@ -108,6 +101,7 @@ int Connect(int attempts, int pos, char *response, enum Step current_step)
         }
         return 2;
     }
+    return 2;
 }
 
 int mode(int pos, char *response)
@@ -122,6 +116,7 @@ int mode(int pos, char *response)
         response[pos] = '\0';
         if (strstr(response, "LWOTAA") != NULL)
         {
+            printf("%s \n", response);
             return 1;
         }
     }
@@ -130,11 +125,12 @@ int mode(int pos, char *response)
         printf("Module stopped responding\n");
         return 2;
     }
+    return 2;
 }
 
 int appkey(int pos, char *response)
 {
-    uart_send(UART_NR, "AT+KEY=APPKEY,\"e06716984de834e2a38a779b9cd2def3\"\r\n");
+    uart_send(UART_NR, "AT+KEY=APPKEY,\"90e094eac49d050137c3f15e149d053d\"\r\n");
     sleep_ms(500);
 
     pos = read_string(response);
@@ -144,6 +140,7 @@ int appkey(int pos, char *response)
         response[pos] = '\0';
         if (strstr(response, "APPKEY") != NULL)
         {
+            printf("%s \n", response);
             return 1;
         }
     }
@@ -152,6 +149,7 @@ int appkey(int pos, char *response)
         printf("Module stopped responding\n");
         return 2;
     }
+    return 2;
 }
 
 int class(int pos, char *response)
@@ -164,6 +162,7 @@ int class(int pos, char *response)
     if (pos > 0)
     {
         response[pos] = '\0';
+        printf("%s \n", response);
         return 1;
     }
     else
@@ -171,6 +170,7 @@ int class(int pos, char *response)
         printf("Module stopped responding\n");
         return 2;
     }
+    return 2;
 }
 
 int port(int pos, char *response)
@@ -185,6 +185,7 @@ int port(int pos, char *response)
         response[pos] = '\0';
         if (strstr(response, "PORT") != NULL)
         {
+            printf("%s \n", response);
             return 1;
         }
         else
@@ -193,12 +194,13 @@ int port(int pos, char *response)
             return 2;
         }
     }
+    return 2;
 }
 
 int join(int pos, char *response)
 {
     uart_send(UART_NR, "AT+JOIN\r\n");
-    sleep_ms(5000);
+    sleep_ms(10000);
 
     pos = read_string(response);
 
@@ -209,6 +211,7 @@ int join(int pos, char *response)
 
         if (strstr(response, "Done") != NULL)
         {
+            printf("%s \n", response);
             return 1;
         }
         else if (strstr(response, "failed") != NULL)
@@ -222,10 +225,13 @@ int join(int pos, char *response)
         printf("Module stopped responding\n");
         return 2;
     }
+    return 2;
 }
 
-void message(char *msg, int pos, char *response)
+void lora_msg(char *msg)
 {
+    char response[RESP_LEN];
+    int pos;
     uart_send(UART_NR, msg);
     sleep_ms(5000);
     pos = read_string(response);
