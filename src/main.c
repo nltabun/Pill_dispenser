@@ -50,11 +50,13 @@ int main(void)
     init_all();
 
     // lora_msg("Booting up...");
+    lora_msg("AT+MSG=\"Booting up...\"\r\n");
 
     if (load_state_from_eeprom(&state, &cycles_remaining, &MOTOR_STEPS.current_step, &MOTOR_STEPS.steps_per_revolution, &position))
     {
         printf("Loaded state: %d\n", state);
         // lora_msg("Dispenser state successfully loaded");
+        lora_msg("AT+MSG=\"Dispenser state successfully loaded\"\r\n");
 
         if (state == DISPENSING)
         {
@@ -66,6 +68,7 @@ int main(void)
     {
         printf("No valid dispenser state found\n");
         // lora_msg("No valid dispenser state found");
+        lora_msg("AT+MSG=\"No valid dispenser state found\"\r\n");
     }
 
     start_time = time_us_64();
@@ -97,6 +100,7 @@ int main(void)
         case CALIBRATING:
             calibrate(&MOTOR_STEPS, 1);
             // lora_msg("Calibrated");
+            lora_msg("AT+MSG=\"Calibrated\"\r\n");
             state = READY_TO_START;
             save_state_to_eeprom(&state, 0, &MOTOR_STEPS.current_step, &MOTOR_STEPS.steps_per_revolution);
         case READY_TO_START:
@@ -130,11 +134,13 @@ int main(void)
                 {
                     printf("Pill dispensed!\n");
                     // lora_msg("Pill dispensed!");
+                    lora_msg("AT+MSG=\"Pill dispensed\"\r\n");
                 }
                 else
                 {
                     printf("Pill not dispensed!\n");
                     // lora_msg("Pill not dispensed!");
+                    lora_msg("AT+MSG=\"Pill not dispensed\"\r\n");
                 }
             }
 
@@ -186,3 +192,4 @@ void button_setup(void)
     gpio_pull_up(BUTTON_SW1);
     gpio_pull_up(BUTTON_SW2);
 }
+
