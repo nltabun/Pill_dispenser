@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "pico/stdlib.h"
 #include "eeprom.h"
 
@@ -25,8 +26,7 @@ void eeprom_write_bytes(uint16_t address, uint8_t length, uint8_t *data)
     sleep_ms(5);
 }
 
-// TODO: Add calibration data
-bool load_state_from_eeprom(uint8_t *dispenser_state, uint8_t *cycles_remaining)
+bool load_state_from_eeprom(uint8_t *dispenser_state, uint8_t *cycles_remaining, uint8_t *current_step, uint16_t *steps_per_revolution, uint8_t *position)
 {
     uint8_t read_buffer[DISPENSER_STATE_LEN] = {0};
 
@@ -53,29 +53,65 @@ bool load_state_from_eeprom(uint8_t *dispenser_state, uint8_t *cycles_remaining)
             *cycles_remaining = 0;
     }
 
+    if (_validate_stored_value(read_buffer[4], read_buffer[5]))
+    {
+        *current_step = read_buffer[4];
+    }
+    else
+    {
+        *current_step = 0;
+    }
+
+    if (_validate_stored_value(read_buffer[6], read_buffer[8]) && _validate_stored_value(read_buffer[7], read_buffer[9]))
+    {
+        *steps_per_revolution = (read_buffer[6] << 8) | read_buffer[7];
+    }
+    else
+    {
+        *steps_per_revolution = 0;
+    }
+
+    if (_validate_stored_value(read_buffer[10], read_buffer[11]))
+    {
+        *position = read_buffer[10];
+    }
+    else
+    {
+        *position = 0;
+    }
+
+    // printf("Loaded state: %hhu\nCycles remaining: %hhu\nCurrent step: %hhu\nSteps per revolution: %hu\nPosition: %hhu\n", *dispenser_state, *cycles_remaining, *current_step, *steps_per_revolution, *position);
+
     return true;
 }
 
-// TODO: Add calibration data
-void save_state_to_eeprom(uint8_t *dispenser_state, uint8_t *cycles_remaining)
+void save_state_to_eeprom(uint8_t *dispenser_state, uint8_t *cycles_remaining, uint8_t *current_step, uint16_t *steps_per_revolution)
 {
     uint8_t write_buffer[DISPENSER_STATE_LEN];
 
     write_buffer[0] = *dispenser_state;
-    write_buffer[1] = (uint8_t) ~*dispenser_state;
+    write_buffer[1] = ~*dispenser_state;
 
-    if (*cycles_remaining != 0)
-    {
-        write_buffer[2] = *cycles_remaining;
-        write_buffer[3] = (uint8_t) ~*cycles_remaining;
-    }
-    else
-    {
-        write_buffer[2] = 0;
-        write_buffer[3] = 0;
-    }
+    write_buffer[2] = *cycles_remaining;
+    write_buffer[3] = ~*cycles_remaining;
 
-    eeprom_write_bytes(DISPENSER_STATE_ADDR, DISPENSER_STATE_LEN, write_buffer);
+    write_buffer[4] = *current_step;
+    write_buffer[5] = ~*current_step;
+
+    write_buffer[6] = *steps_per_revolution >> 8;
+    write_buffer[7] = *steps_per_revolution & 0xFF;
+    write_buffer[8] = ~(*steps_per_revolution >> 8);
+    write_buffer[9] = ~(*steps_per_revolution & 0xFF);
+
+    // printf("Writing state to EEPROM: %hhu %hhu %hhu %hhu %hhu %hhu %hhu %hhu %hhu %hhu\n", write_buffer[0], write_buffer[1], write_buffer[2], write_buffer[3], write_buffer[4], write_buffer[5], write_buffer[6], write_buffer[7], write_buffer[8], write_buffer[9]);
+
+    eeprom_write_bytes(DISPENSER_STATE_ADDR, DISPENSER_STATE_LEN-2, write_buffer);
+}
+
+void update_position(uint8_t position)
+{
+    uint8_t write_buffer[2] = {position, ~position};
+    eeprom_write_bytes(POSITION_ADDR, 2, write_buffer);
 }
 
 bool _validate_stored_value(uint8_t value, uint8_t not_value)
