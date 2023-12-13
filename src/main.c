@@ -52,7 +52,6 @@ int main(void)
     // lora_msg("Booting up...");
     lora_connect();
     lora_msg("AT+MSG=\"Booting up...\"\r\n");
-    char response[RESP_LEN];
 
     if (load_state_from_eeprom(&state, &cycles_remaining, &MOTOR_STEPS.current_step, &MOTOR_STEPS.steps_per_revolution, &position))
     {
@@ -128,11 +127,11 @@ int main(void)
                     sleep_ms(10);
                 }
 
+                time = time_us_64();
                 turn_dispenser(&MOTOR_STEPS, 1, &pill_dispensed);
                 cycles_remaining--;
                 save_state_to_eeprom(&state, &cycles_remaining, &MOTOR_STEPS.current_step, &MOTOR_STEPS.steps_per_revolution);
                 update_position(0);
-                time = time_us_64();
 
                 if (pill_dispensed)
                 {
