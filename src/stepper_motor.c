@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include "pico/stdlib.h"
 #include "stepper_motor.h"
+#include "eeprom.h"
 
 void motor_step(const uint8_t *step)
 {
@@ -101,29 +102,74 @@ void calibrate(MotorSteps *motor_steps, const int runs)
     printf("Calibration complete. Steps per revolution: %d\n", motor_steps->steps_per_revolution);
 }
 
+void recalibrate_after_poweroff(MotorSteps *motor_steps, const int cycles_remaining, uint8_t position)
+{
+    printf("Recalibrating after poweroff...\n");
+    /*
+    int count = 0;
+    int icount = 0;
+
+    if (gpio_get(OPTO_FORK_PIN))
+    {
+        count++;
+        while (gpio_get(OPTO_FORK_PIN))
+        {
+            rotate_motor(motor_steps, true);
+            count++;
+        }
+    }
+    printf("Count: %d\n", count);
+
+    while (!gpio_get(OPTO_FORK_PIN))
+    {
+        rotate_motor(motor_steps, true);
+        icount++;
+    }
+    printf("iCount: %d\n", icount);
+    */
+
+    int run_steps = position * 4;
+    for (int i = 0; i < run_steps; i++)
+    {
+        rotate_motor(motor_steps, true);
+    }
+
+    //bool dummy = true;
+    //turn_dispenser(motor_steps, (7 - cycles_remaining), &dummy);
+}
+
 void turn_dispenser(MotorSteps *motor_steps, int turns, bool *pill_dispensed)
 {
-    int run_steps;
+    int turn_steps;
 
     printf("Running...\n");
 
     if (!motor_steps->steps_per_revolution)
     {
         printf("Warning! Device not calibrated. Defaulting to steps per revolution: %d\n", DEFAULT_STEPS_PER_REV);
-        run_steps = turns * (DEFAULT_STEPS_PER_REV / 8);
+        turn_steps = DEFAULT_STEPS_PER_REV / 8;
     }
     else
-        run_steps = turns * (motor_steps->steps_per_revolution / 8);
+        turn_steps = motor_steps->steps_per_revolution / 8;
 
-    *pill_dispensed = false;    
-    for (int i = 0; i < run_steps; i++)
+    *pill_dispensed = false;
+
+    for (int t = 0; t < turns; t++)
     {
-        rotate_motor(motor_steps, false);
-        if (!gpio_get(PIEZO_SENSOR_PIN))
+        for (int pos = 0; pos < turn_steps; pos++)
         {
-            *pill_dispensed = true;
+            rotate_motor(motor_steps, false);
+            if (pos % 4 == 0)
+            {
+                printf("Position/4: %d\n", pos / 4);
+                update_position(pos / 4);
+            }
+
+            if (!gpio_get(PIEZO_SENSOR_PIN) && !(*pill_dispensed)) // TODO: do this check with a GPIO interrupt for reliability
+            {
+                *pill_dispensed = true;
+            }
         }
-        
     }
 
     printf("Motor turned dispenser %d time(s)\n", turns);

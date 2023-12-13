@@ -29,9 +29,11 @@ int main(void)
     enum DispenserState state;
     bool led = false;
     uint8_t led_timer = 0;
+    uint64_t start_time;
     uint64_t time;
     uint8_t cycles_remaining;
     bool pill_dispensed;
+    uint8_t position = 0;
 
     MotorSteps MOTOR_STEPS = {
         {{1, 0, 0, 0},  // 0
@@ -50,11 +52,17 @@ int main(void)
     // lora_msg("Booting up...");
     lora_msg("AT+MSG=\"Booting up...\"\r\n");
 
-    if (load_state_from_eeprom(&state, &cycles_remaining))
+    if (load_state_from_eeprom(&state, &cycles_remaining, &MOTOR_STEPS.current_step, &MOTOR_STEPS.steps_per_revolution, &position))
     {
         printf("Loaded state: %d\n", state);
         // lora_msg("Dispenser state successfully loaded");
         lora_msg("AT+MSG=\"Dispenser state successfully loaded\"\r\n");
+
+        if (state == DISPENSING)
+        {
+            recalibrate_after_poweroff(&MOTOR_STEPS, cycles_remaining, position);
+            printf("Recalibrated. Cycles remaining: %d\n", cycles_remaining);
+        }
     }
     else
     {
@@ -62,7 +70,9 @@ int main(void)
         // lora_msg("No valid dispenser state found");
         lora_msg("AT+MSG=\"No valid dispenser state found\"\r\n");
     }
-    
+
+    start_time = time_us_64();
+    time = start_time;    
 
     while (true)
     {
@@ -86,13 +96,13 @@ int main(void)
                 sleep_ms(10);
             sleep_ms(100);
             state = CALIBRATING;
-            save_state_to_eeprom(&state, 0);
+            save_state_to_eeprom(&state, 0, &MOTOR_STEPS.current_step, &MOTOR_STEPS.steps_per_revolution);
         case CALIBRATING:
             calibrate(&MOTOR_STEPS, 1);
             // lora_msg("Calibrated");
             lora_msg("AT+MSG=\"Calibrated\"\r\n");
             state = READY_TO_START;
-            save_state_to_eeprom(&state, 0);
+            save_state_to_eeprom(&state, 0, &MOTOR_STEPS.current_step, &MOTOR_STEPS.steps_per_revolution);
         case READY_TO_START:
             gpio_put(LED_1, (led = true));
             while (gpio_get(BUTTON_SW1))
@@ -105,19 +115,20 @@ int main(void)
 
             state = DISPENSING;
             cycles_remaining = 7;
-            save_state_to_eeprom(&state, &cycles_remaining);
+            save_state_to_eeprom(&state, &cycles_remaining, &MOTOR_STEPS.current_step, &MOTOR_STEPS.steps_per_revolution);
         case DISPENSING:
             while (cycles_remaining > 0)
             {
                 time = time_us_64();
-                while ((time_us_64() - time) < 30000000)
+                while ((time_us_64() - time) < 30000000) // TODO: Need a better way to do this
                 {
                     sleep_ms(10);
                 }
 
                 turn_dispenser(&MOTOR_STEPS, 1, &pill_dispensed);
                 cycles_remaining--;
-                save_state_to_eeprom(&state, &cycles_remaining);
+                save_state_to_eeprom(&state, &cycles_remaining, &MOTOR_STEPS.current_step, &MOTOR_STEPS.steps_per_revolution);
+                update_position(0);
 
                 if (pill_dispensed)
                 {
@@ -134,14 +145,15 @@ int main(void)
             }
 
             state = WAIT_FOR_CALIBRATION;
-            save_state_to_eeprom(&state, 0);
+            save_state_to_eeprom(&state, 0, &MOTOR_STEPS.current_step, &MOTOR_STEPS.steps_per_revolution);
             break;
         default:
             state = WAIT_FOR_CALIBRATION;
-            save_state_to_eeprom(&state, 0);
+            save_state_to_eeprom(&state, 0, &MOTOR_STEPS.current_step, &MOTOR_STEPS.steps_per_revolution);
             break;
         }
     }
+
 }
 
 void init_all(void)
