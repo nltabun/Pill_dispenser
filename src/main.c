@@ -52,7 +52,6 @@ int main(void)
     // lora_msg("Booting up...");
     lora_connect();
     lora_msg("AT+MSG=\"Booting up...\"\r\n");
-    char response[RESP_LEN];
 
     if (load_state_from_eeprom(&state, &cycles_remaining, &MOTOR_STEPS.current_step, &MOTOR_STEPS.steps_per_revolution, &position))
     {
