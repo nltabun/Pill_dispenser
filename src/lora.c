@@ -96,6 +96,7 @@ int Connect(int attempts, int pos, char *response, enum Step current_step)
             response[pos] = '\0';
             if (strstr(response, "OK") != NULL)
             {
+                printf("%s \n", response);
                 return 1;
             }
         }
@@ -108,6 +109,7 @@ int Connect(int attempts, int pos, char *response, enum Step current_step)
         }
         return 2;
     }
+    return 2;
 }
 
 int mode(int pos, char *response)
@@ -122,6 +124,7 @@ int mode(int pos, char *response)
         response[pos] = '\0';
         if (strstr(response, "LWOTAA") != NULL)
         {
+            printf("%s \n", response);
             return 1;
         }
     }
@@ -130,6 +133,7 @@ int mode(int pos, char *response)
         printf("Module stopped responding\n");
         return 2;
     }
+    return 2;
 }
 
 int appkey(int pos, char *response)
@@ -144,6 +148,7 @@ int appkey(int pos, char *response)
         response[pos] = '\0';
         if (strstr(response, "APPKEY") != NULL)
         {
+            printf("%s \n", response);
             return 1;
         }
     }
@@ -152,6 +157,7 @@ int appkey(int pos, char *response)
         printf("Module stopped responding\n");
         return 2;
     }
+    return 2;
 }
 
 int class(int pos, char *response)
@@ -164,6 +170,7 @@ int class(int pos, char *response)
     if (pos > 0)
     {
         response[pos] = '\0';
+        printf("%s \n", response);
         return 1;
     }
     else
@@ -171,6 +178,7 @@ int class(int pos, char *response)
         printf("Module stopped responding\n");
         return 2;
     }
+    return 2;
 }
 
 int port(int pos, char *response)
@@ -185,6 +193,7 @@ int port(int pos, char *response)
         response[pos] = '\0';
         if (strstr(response, "PORT") != NULL)
         {
+            printf("%s \n", response);
             return 1;
         }
         else
@@ -193,12 +202,13 @@ int port(int pos, char *response)
             return 2;
         }
     }
+    return 2;
 }
 
 int join(int pos, char *response)
 {
     uart_send(UART_NR, "AT+JOIN\r\n");
-    sleep_ms(5000);
+    sleep_ms(10000);
 
     pos = read_string(response);
 
@@ -209,6 +219,7 @@ int join(int pos, char *response)
 
         if (strstr(response, "Done") != NULL)
         {
+            printf("%s \n", response);
             return 1;
         }
         else if (strstr(response, "failed") != NULL)
@@ -222,6 +233,7 @@ int join(int pos, char *response)
         printf("Module stopped responding\n");
         return 2;
     }
+    return 2;
 }
 
 void message(char *msg, int pos, char *response)
