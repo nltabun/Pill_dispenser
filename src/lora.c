@@ -13,9 +13,8 @@ int read_string(char *response)
     return 0;
 }
 
-void lora_msg(char *msg)
+void lora_connect()
 {
-
     uart_setup(UART_NR, UART_TX_PIN, UART_RX_PIN, UART_BAUD_RATE);
     enum Step current_step;
     char response[RESP_LEN];
@@ -65,14 +64,7 @@ void lora_msg(char *msg)
                     function_done = 1;
                 break;
             case JOIN:
-                result = join(pos, response);
-                if (result == 1)
-                    current_step = SEND_MSG;
-                else
-                    function_done = 1;
-                break;
-            case SEND_MSG:
-                message(msg, pos, response);
+                join(pos, response);
                 function_done = 1;
                 break;
             default:
@@ -138,7 +130,7 @@ int mode(int pos, char *response)
 
 int appkey(int pos, char *response)
 {
-    uart_send(UART_NR, "AT+KEY=APPKEY,\"e06716984de834e2a38a779b9cd2def3\"\r\n");
+    uart_send(UART_NR, "AT+KEY=APPKEY,\"90e094eac49d050137c3f15e149d053d\"\r\n");
     sleep_ms(500);
 
     pos = read_string(response);
@@ -236,8 +228,10 @@ int join(int pos, char *response)
     return 2;
 }
 
-void message(char *msg, int pos, char *response)
+void lora_msg(char *msg)
 {
+    char response[RESP_LEN];
+    int pos;
     uart_send(UART_NR, msg);
     sleep_ms(5000);
     pos = read_string(response);
