@@ -1,4 +1,6 @@
+#include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 #include "pico/stdlib.h"
 #include "eeprom.h"
 
@@ -106,6 +108,99 @@ void save_state_to_eeprom(uint8_t *dispenser_state, uint8_t *cycles_remaining, u
     // printf("Writing state to EEPROM: %hhu %hhu %hhu %hhu %hhu %hhu %hhu %hhu %hhu %hhu\n", write_buffer[0], write_buffer[1], write_buffer[2], write_buffer[3], write_buffer[4], write_buffer[5], write_buffer[6], write_buffer[7], write_buffer[8], write_buffer[9]);
 
     eeprom_write_bytes(DISPENSER_STATE_ADDR, DISPENSER_STATE_LEN-2, write_buffer);
+}
+
+void add_message_to_log(const uint8_t *msg)
+{
+    uint8_t buffer[64];
+    uint8_t temp[1];
+    uint16_t log_addr;
+    // uint16_t crc;
+    int i;
+
+    if (strlen((char *)msg) >= MSG_MAX_LEN)
+    {
+        printf("Message too long\n");
+        return;
+    }
+
+    for (i = 0; msg[i] != '\0'; i++)
+    {
+        buffer[i] = msg[i];
+    }
+    buffer[i++] = '\0';
+
+    log_addr = LOG_START_ADDR;
+    while (log_addr <= LOG_END_ADDR - LOG_ENTRY_SIZE) {
+        eeprom_read_bytes(log_addr, 1, temp);
+        if (temp[0] == 0x00) {
+            eeprom_write_bytes(log_addr, i, buffer);
+            return;
+        }
+        log_addr += LOG_ENTRY_SIZE;
+    }
+
+    printf("Log full\n");
+    erase_log(0);
+    eeprom_write_bytes(LOG_START_ADDR, i , buffer);
+}
+
+void read_log(uint8_t start_block)
+{
+    uint8_t buffer[64];
+    uint16_t log_addr = LOG_START_ADDR;
+    int count = 0;
+    bool invalid_entry = false;
+
+    while (log_addr <= LOG_END_ADDR - LOG_ENTRY_SIZE && !invalid_entry)
+    {
+        eeprom_read_bytes(log_addr, LOG_ENTRY_SIZE, buffer);
+        if (buffer[0] != 0x00)
+        {
+            count++;
+            printf("[%d] %s\n", count, buffer);
+        }
+        else
+        {
+            invalid_entry = true;
+        }
+    }
+
+    if (log_addr == LOG_START_ADDR)
+        printf("<empty>\n");
+    printf("--- End of log ---\n");
+}
+
+void erase_log(uint8_t block)
+{
+    uint16_t log_addr;
+    uint16_t end_addr;
+
+    if (block == 0)
+    {
+        log_addr = LOG_START_ADDR;
+        end_addr = LOG_END_ADDR;
+    }
+    else if (block == 1)
+    {
+        log_addr = LOG_START_ADDR;
+        end_addr = LOG_END_ADDR / 2;
+    }
+    else if (block == 2)
+    {
+        log_addr = LOG_END_ADDR / 2;
+        end_addr = LOG_END_ADDR;
+    }
+    else return;
+
+    while (log_addr <= end_addr - LOG_ENTRY_SIZE)
+    {
+        eeprom_write_bytes(log_addr, 1, (uint8_t[1]){0x00});
+        // printf("%hu\n", log_addr);
+        log_addr += LOG_ENTRY_SIZE;
+    }
+
+    printf("Log erased\n");
 }
 
 void update_position(uint8_t position)
