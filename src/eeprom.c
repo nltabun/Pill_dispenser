@@ -28,26 +28,26 @@ void eeprom_write_bytes(const uint16_t address, const uint8_t length, const uint
     sleep_ms(5);
 }
 
-bool load_state_from_eeprom(uint8_t *dispenser_state, uint8_t *cycles_remaining, uint8_t *current_step, uint16_t *steps_per_revolution, uint8_t *position)
+uint8_t load_state_from_eeprom(uint8_t *cycles_remaining, uint8_t *current_step, uint16_t *steps_per_revolution, uint8_t *position)
 {
     uint8_t read_buffer[DISPENSER_STATE_LEN] = {0};
+    uint8_t dispenser_state = 0;
 
     eeprom_read_bytes(DISPENSER_STATE_ADDR, DISPENSER_STATE_LEN, read_buffer);
 
     // Check if valid dispenser state is stored in the EEPROM
     if (_validate_stored_value(read_buffer[0], read_buffer[1]))
     {
-        *dispenser_state = read_buffer[0];
+        dispenser_state = read_buffer[0];
     }
     else
     {
-        *dispenser_state = 0;
-        return false;
+        return dispenser_state;
     }
 
     // Check if valid number of cycles remaining is stored in the EEPROM
     // This is present only if dispenser was shutdown in Dispensing state
-    if (*dispenser_state == 3)
+    if (dispenser_state == 3)
     {
         if (_validate_stored_value(read_buffer[2], read_buffer[3]))
             *cycles_remaining = read_buffer[2];
@@ -87,12 +87,12 @@ bool load_state_from_eeprom(uint8_t *dispenser_state, uint8_t *cycles_remaining,
     return true;
 }
 
-void save_state_to_eeprom(uint8_t *dispenser_state, uint8_t *cycles_remaining, uint8_t *current_step, uint16_t *steps_per_revolution)
+void save_state_to_eeprom(uint8_t dispenser_state, uint8_t *cycles_remaining, uint8_t *current_step, uint16_t *steps_per_revolution)
 {
     uint8_t write_buffer[DISPENSER_STATE_LEN];
 
-    write_buffer[0] = *dispenser_state;
-    write_buffer[1] = ~*dispenser_state;
+    write_buffer[0] = dispenser_state;
+    write_buffer[1] = ~dispenser_state;
 
     write_buffer[2] = *cycles_remaining;
     write_buffer[3] = ~*cycles_remaining;
