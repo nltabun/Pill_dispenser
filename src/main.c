@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <stdio.h>
 #include "pico/stdlib.h"
 #include "hardware/gpio.h"
@@ -34,6 +35,7 @@ int main(void)
     uint8_t cycles_remaining;
     bool pill_dispensed;
     uint8_t position = 0;
+    uint8_t msg[MSG_MAX_LEN];
 
     MotorSteps MOTOR_STEPS = {
         {{1, 0, 0, 0},  // 0
@@ -135,13 +137,17 @@ int main(void)
 
                 if (pill_dispensed)
                 {
-                    printf("Pill dispensed!\n");
+                    snprintf((char *)msg, MSG_MAX_LEN, "Pill dispensed. %hu pills remaining", cycles_remaining);
+                    printf("%s\n", msg);
+                    add_message_to_log(msg);
                     // lora_msg("Pill dispensed!");
                     lora_msg("AT+MSG=\"Pill dispensed\"\r\n");
                 }
                 else
                 {
+                    snprintf((char *)msg, MSG_MAX_LEN, "Pill not dispensed. %hu pills remaining", cycles_remaining);
                     printf("Pill not dispensed!\n");
+                    add_message_to_log(msg);
                     // lora_msg("Pill not dispensed!");
                     lora_msg("AT+MSG=\"Pill not dispensed\"\r\n");
                 }

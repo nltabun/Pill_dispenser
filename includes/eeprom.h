@@ -20,8 +20,8 @@
 #define LOG_BLOCK_ADDR
 #define MSG_MAX_LEN 61
 
-void eeprom_read_bytes(uint16_t address, uint8_t length, uint8_t *buffer);
-void eeprom_write_bytes(uint16_t address, uint8_t length, uint8_t *data);
+void eeprom_read_bytes(const uint16_t address, const uint8_t length, uint8_t *data);
+void eeprom_write_bytes(const uint16_t address, const uint8_t length, const uint8_t *data);
 bool load_state_from_eeprom(uint8_t *dispenser_state, uint8_t *cycles_remaining, uint8_t *current_step, uint16_t *steps_per_revolution, uint8_t *position);
 void save_state_to_eeprom(uint8_t *dispenser_state, uint8_t *cycles_remaining, uint8_t *current_step, uint16_t *steps_per_revolution);
 void add_message_to_log(const uint8_t *msg);

@@ -4,7 +4,7 @@
 #include "pico/stdlib.h"
 #include "eeprom.h"
 
-void eeprom_read_bytes(uint16_t address, uint8_t length, uint8_t *data)
+void eeprom_read_bytes(const uint16_t address, const uint8_t length, uint8_t *data)
 {
     uint8_t buffer[2] = {address >> 8, address & 0xFF}; // High byte-, low byte of memory address
 
@@ -12,7 +12,7 @@ void eeprom_read_bytes(uint16_t address, uint8_t length, uint8_t *data)
     i2c_read_blocking(I2C_PORT, DEV_ADDR, data, length, false);
 }
 
-void eeprom_write_bytes(uint16_t address, uint8_t length, uint8_t *data)
+void eeprom_write_bytes(const uint16_t address, const uint8_t length, const uint8_t *data)
 {
     uint8_t buffer[length + 2]; // High byte-, low byte of memory address, data
     buffer[0] = address >> 8;
@@ -112,29 +112,21 @@ void save_state_to_eeprom(uint8_t *dispenser_state, uint8_t *cycles_remaining, u
 
 void add_message_to_log(const uint8_t *msg)
 {
-    uint8_t buffer[64];
     uint8_t temp[1];
     uint16_t log_addr;
-    // uint16_t crc;
-    int i;
+    int msg_len = strlen((char *)msg);
 
-    if (strlen((char *)msg) >= MSG_MAX_LEN)
+    if (msg_len >= MSG_MAX_LEN)
     {
         printf("Message too long\n");
         return;
     }
 
-    for (i = 0; msg[i] != '\0'; i++)
-    {
-        buffer[i] = msg[i];
-    }
-    buffer[i++] = '\0';
-
     log_addr = LOG_START_ADDR;
     while (log_addr <= LOG_END_ADDR - LOG_ENTRY_SIZE) {
         eeprom_read_bytes(log_addr, 1, temp);
         if (temp[0] == 0x00) {
-            eeprom_write_bytes(log_addr, i, buffer);
+            eeprom_write_bytes(log_addr, msg_len, msg);
             return;
         }
         log_addr += LOG_ENTRY_SIZE;
@@ -142,7 +134,7 @@ void add_message_to_log(const uint8_t *msg)
 
     printf("Log full\n");
     erase_log(0);
-    eeprom_write_bytes(LOG_START_ADDR, i , buffer);
+    eeprom_write_bytes(LOG_START_ADDR, msg_len, msg);
 }
 
 void read_log(uint8_t start_block)
