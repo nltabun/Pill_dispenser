@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <stdio.h>
 #include "pico/stdlib.h"
 #include "hardware/gpio.h"
@@ -11,11 +12,13 @@
 #define BUTTON_SW0 9
 #define BUTTON_SW1 8
 #define BUTTON_SW2 7
+#define CYCLE_DURATION 30000000 // us = (30s) -- 86400000000 for 24h cycle
 #define PIEZO_SENSOR_PIN 27
+
 
 enum DispenserState
 {
-    WAIT_FOR_CALIBRATION = 0,
+    WAIT_FOR_CALIBRATION = 1,
     CALIBRATING,
     READY_TO_START,
     DISPENSING
@@ -39,6 +42,7 @@ int main(void)
     uint64_t time;
     uint8_t cycles_remaining;
     uint8_t position = 0;
+    uint8_t msg[MSG_MAX_LEN] = {0};
 
     MotorSteps MOTOR_STEPS = {
         {{1, 0, 0, 0},  // 0
@@ -54,14 +58,13 @@ int main(void)
 
     init_all();
 
-    // lora_msg("Booting up...");
     lora_connect();
     lora_msg("AT+MSG=\"Booting up...\"\r\n");
 
-    if (load_state_from_eeprom(&state, &cycles_remaining, &MOTOR_STEPS.current_step, &MOTOR_STEPS.steps_per_revolution, &position))
+    state = load_state_from_eeprom(&cycles_remaining, &MOTOR_STEPS.current_step, &MOTOR_STEPS.steps_per_revolution, &position);
+    if (state)
     {
         printf("Loaded state: %d\n", state);
-        // lora_msg("Dispenser state successfully loaded");
         lora_msg("AT+MSG=\"Dispenser state successfully loaded\"\r\n");
 
         if (state == DISPENSING)
@@ -73,20 +76,22 @@ int main(void)
     }
     else
     {
-        printf("No valid dispenser state found\n");
-        // lora_msg("No valid dispenser state found");
+        printf("No valid dispenser state found in memory\n");
         lora_msg("AT+MSG=\"No valid dispenser state found\"\r\n");
+        state = WAIT_FOR_CALIBRATION; // Set state to '1'
     }
 
     start_time = time_us_64();
     time = start_time;
+    
 
     while (true)
     {
         switch (state)
         {
         case WAIT_FOR_CALIBRATION:
-            while (gpio_get(BUTTON_SW1))
+            // Wait for button press and blink led 0
+            while (gpio_get(BUTTON_SW1) && gpio_get(BUTTON_SW2))
             {
                 if (led_timer > 100)
                 {
@@ -98,36 +103,50 @@ int main(void)
                 sleep_ms(10);
             }
             gpio_put(LED_0, (led = false));
+            
+            if (!gpio_get(BUTTON_SW2))
+            {
+                while (!gpio_get(BUTTON_SW2)) // Wait for button release
+                    sleep_ms(10);
 
-            while (!gpio_get(BUTTON_SW1))
-                sleep_ms(10);
-            sleep_ms(100);
-            state = CALIBRATING;
-            save_state_to_eeprom(&state, 0, &MOTOR_STEPS.current_step, &MOTOR_STEPS.steps_per_revolution);
+                read_log();
+                break;
+            }
+            else
+            {
+                while (!gpio_get(BUTTON_SW1)) // Wait for button release
+                    sleep_ms(10);
+                
+                erase_log(); // Erase previous runs log
+                // sleep_ms(100); // Do we need this??
+
+                state = CALIBRATING;
+                save_state_to_eeprom((uint8_t)state, 0, &MOTOR_STEPS.current_step, &MOTOR_STEPS.steps_per_revolution);
+            }
         case CALIBRATING:
             calibrate(&MOTOR_STEPS, 1);
-            // lora_msg("Calibrated");
             lora_msg("AT+MSG=\"Calibrated\"\r\n");
+
             state = READY_TO_START;
-            save_state_to_eeprom(&state, 0, &MOTOR_STEPS.current_step, &MOTOR_STEPS.steps_per_revolution);
+            save_state_to_eeprom((uint8_t)state, 0, &MOTOR_STEPS.current_step, &MOTOR_STEPS.steps_per_revolution);
         case READY_TO_START:
             gpio_put(LED_1, (led = true));
-            while (gpio_get(BUTTON_SW1))
+            while (gpio_get(BUTTON_SW1)) // Wait for button press
                 sleep_ms(10);
 
-            while (!gpio_get(BUTTON_SW1))
+            while (!gpio_get(BUTTON_SW1)) // Wait for button release
                 sleep_ms(10);
 
             gpio_put(LED_1, (led = false));
 
             state = DISPENSING;
             cycles_remaining = 7;
-            save_state_to_eeprom(&state, &cycles_remaining, &MOTOR_STEPS.current_step, &MOTOR_STEPS.steps_per_revolution);
+            save_state_to_eeprom((uint8_t)state, &cycles_remaining, &MOTOR_STEPS.current_step, &MOTOR_STEPS.steps_per_revolution);
         case DISPENSING:
             time = time_us_64();
             while (cycles_remaining > 0)
             {
-                while ((time_us_64() - time) < 30000000) // TODO: Need a better way to do this
+                while ((time_us_64() - time) < CYCLE_DURATION)
                 {
                     sleep_ms(10);
                 }
@@ -135,17 +154,23 @@ int main(void)
                 time = time_us_64();
                 turn_dispenser(&MOTOR_STEPS, 1, &pillDispensed);
                 cycles_remaining--;
-                save_state_to_eeprom(&state, &cycles_remaining, &MOTOR_STEPS.current_step, &MOTOR_STEPS.steps_per_revolution);
+                save_state_to_eeprom((uint8_t)state, &cycles_remaining, &MOTOR_STEPS.current_step, &MOTOR_STEPS.steps_per_revolution);
                 update_position(0);
 
                 if (pillDispensed)
                 {
-                    printf("Pill dispensed!\n");
-                    // lora_msg("Pill dispensed!");
+                    snprintf((char *)msg, MSG_MAX_LEN, "Pill dispensed. %hu cycles remaining", cycles_remaining);
+                    printf("%s\n", msg);
+                    add_message_to_log(msg);
                     lora_msg("AT+MSG=\"Pill dispensed\"\r\n");
                 }
                 else
                 {
+
+                    snprintf((char *)msg, MSG_MAX_LEN, "Pill not dispensed. %hu cycles remaining", cycles_remaining);
+                    printf("%s\n", msg);
+                    add_message_to_log(msg);
+
                     printf("Pill not dispensed!\n");
                     // lora_msg("Pill not dispensed!");
                     for (int i = 0; i < 5; ++i) {
@@ -162,16 +187,17 @@ int main(void)
                         sleep_ms(1000);
                     }
                     gpio_put(LED_1, (led = false));
+
                     lora_msg("AT+MSG=\"Pill not dispensed\"\r\n");
                 }
                 pillDispensed = false;
             }
             state = WAIT_FOR_CALIBRATION;
-            save_state_to_eeprom(&state, 0, &MOTOR_STEPS.current_step, &MOTOR_STEPS.steps_per_revolution);
+            save_state_to_eeprom((uint8_t)state, 0, &MOTOR_STEPS.current_step, &MOTOR_STEPS.steps_per_revolution);
             break;
         default:
             state = WAIT_FOR_CALIBRATION;
-            save_state_to_eeprom(&state, 0, &MOTOR_STEPS.current_step, &MOTOR_STEPS.steps_per_revolution);
+            save_state_to_eeprom((uint8_t)state, 0, &MOTOR_STEPS.current_step, &MOTOR_STEPS.steps_per_revolution);
             break;
         }
     }
