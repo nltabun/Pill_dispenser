@@ -144,6 +144,7 @@ void read_log()
     int count = 0;
     bool invalid_entry = false;
 
+    printf("--- Previous run ---\n");
     while (log_addr <= LOG_END_ADDR - LOG_ENTRY_SIZE && !invalid_entry)
     {
         eeprom_read_bytes(log_addr, LOG_ENTRY_SIZE, buffer);
