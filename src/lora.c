@@ -130,7 +130,7 @@ int mode(int pos, char *response)
 
 int appkey(int pos, char *response)
 {
-    uart_send(UART_NR, "AT+KEY=APPKEY,\"90e094eac49d050137c3f15e149d053d\"\r\n");
+    uart_send(UART_NR, "AT+KEY=APPKEY,\"e06716984de834e2a38a779b9cd2def3\"\r\n");
     sleep_ms(500);
 
     pos = read_string(response);

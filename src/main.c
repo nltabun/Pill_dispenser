@@ -79,7 +79,7 @@ int main(void)
     }
 
     start_time = time_us_64();
-    time = start_time;    
+    time = start_time;
 
     while (true)
     {
@@ -124,14 +124,15 @@ int main(void)
             cycles_remaining = 7;
             save_state_to_eeprom(&state, &cycles_remaining, &MOTOR_STEPS.current_step, &MOTOR_STEPS.steps_per_revolution);
         case DISPENSING:
+            time = time_us_64();
             while (cycles_remaining > 0)
             {
-                time = time_us_64();
                 while ((time_us_64() - time) < 30000000) // TODO: Need a better way to do this
                 {
                     sleep_ms(10);
                 }
 
+                time = time_us_64();
                 turn_dispenser(&MOTOR_STEPS, 1, &pillDispensed);
                 cycles_remaining--;
                 save_state_to_eeprom(&state, &cycles_remaining, &MOTOR_STEPS.current_step, &MOTOR_STEPS.steps_per_revolution);
@@ -174,7 +175,6 @@ int main(void)
             break;
         }
     }
-
 }
 
 void init_all(void)
