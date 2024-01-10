@@ -8,7 +8,6 @@
 #define STEPPER_PIN_C 6
 #define STEPPER_PIN_D 13
 #define OPTO_FORK_PIN 28
-#define PIEZO_SENSOR_PIN 27
 #define STEPS 8
 #define COILS 4
 #define DELAY_MS 2 
