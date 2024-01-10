@@ -36,7 +36,7 @@ int main(void)
     uint8_t cycles_remaining;
     bool pill_dispensed;
     uint8_t position = 0;
-    uint8_t msg[MSG_MAX_LEN];
+    uint8_t msg[MSG_MAX_LEN] = {0};
 
     MotorSteps MOTOR_STEPS = {
         {{1, 0, 0, 0},  // 0
@@ -72,18 +72,20 @@ int main(void)
     {
         printf("No valid dispenser state found in memory\n");
         lora_msg("AT+MSG=\"No valid dispenser state found\"\r\n");
-        state = WAIT_FOR_CALIBRATION; // Set stage to '1'
+        state = WAIT_FOR_CALIBRATION; // Set state to '1'
     }
 
     start_time = time_us_64();
     time = start_time;
+    
 
     while (true)
     {
         switch (state)
         {
         case WAIT_FOR_CALIBRATION:
-            while (gpio_get(BUTTON_SW1))
+            // Wait for button press and blink led 0
+            while (gpio_get(BUTTON_SW1) && gpio_get(BUTTON_SW2))
             {
                 if (led_timer > 100)
                 {
@@ -95,23 +97,38 @@ int main(void)
                 sleep_ms(10);
             }
             gpio_put(LED_0, (led = false));
+            
+            if (!gpio_get(BUTTON_SW2))
+            {
+                while (!gpio_get(BUTTON_SW2)) // Wait for button release
+                    sleep_ms(10);
 
-            while (!gpio_get(BUTTON_SW1))
-                sleep_ms(10);
-            sleep_ms(100);
-            state = CALIBRATING;
-            save_state_to_eeprom((uint8_t)state, 0, &MOTOR_STEPS.current_step, &MOTOR_STEPS.steps_per_revolution);
+                read_log();
+                break;
+            }
+            else
+            {
+                while (!gpio_get(BUTTON_SW1)) // Wait for button release
+                    sleep_ms(10);
+                
+                erase_log(); // Erase previous runs log
+                // sleep_ms(100); // Do we need this??
+
+                state = CALIBRATING;
+                save_state_to_eeprom((uint8_t)state, 0, &MOTOR_STEPS.current_step, &MOTOR_STEPS.steps_per_revolution);
+            }
         case CALIBRATING:
             calibrate(&MOTOR_STEPS, 1);
             lora_msg("AT+MSG=\"Calibrated\"\r\n");
+
             state = READY_TO_START;
             save_state_to_eeprom((uint8_t)state, 0, &MOTOR_STEPS.current_step, &MOTOR_STEPS.steps_per_revolution);
         case READY_TO_START:
             gpio_put(LED_1, (led = true));
-            while (gpio_get(BUTTON_SW1))
+            while (gpio_get(BUTTON_SW1)) // Wait for button press
                 sleep_ms(10);
 
-            while (!gpio_get(BUTTON_SW1))
+            while (!gpio_get(BUTTON_SW1)) // Wait for button release
                 sleep_ms(10);
 
             gpio_put(LED_1, (led = false));

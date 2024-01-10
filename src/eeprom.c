@@ -114,7 +114,7 @@ void add_message_to_log(const uint8_t *msg)
 {
     uint8_t temp[1];
     uint16_t log_addr;
-    int msg_len = strlen((char *)msg);
+    int msg_len = strlen((char *)msg) + 1; // + 1 so that null gets added
 
     if (msg_len >= MSG_MAX_LEN)
     {
@@ -133,11 +133,11 @@ void add_message_to_log(const uint8_t *msg)
     }
 
     printf("Log full\n");
-    erase_log(0);
+    erase_log();
     eeprom_write_bytes(LOG_START_ADDR, msg_len, msg);
 }
 
-void read_log(uint8_t start_block)
+void read_log()
 {
     uint8_t buffer[64];
     uint16_t log_addr = LOG_START_ADDR;
@@ -151,6 +151,7 @@ void read_log(uint8_t start_block)
         {
             count++;
             printf("[%d] %s\n", count, buffer);
+            log_addr += LOG_ENTRY_SIZE;
         }
         else
         {
@@ -163,29 +164,11 @@ void read_log(uint8_t start_block)
     printf("--- End of log ---\n");
 }
 
-void erase_log(uint8_t block)
+void erase_log(void)
 {
-    uint16_t log_addr;
-    uint16_t end_addr;
+    uint16_t log_addr = LOG_START_ADDR;
 
-    if (block == 0)
-    {
-        log_addr = LOG_START_ADDR;
-        end_addr = LOG_END_ADDR;
-    }
-    else if (block == 1)
-    {
-        log_addr = LOG_START_ADDR;
-        end_addr = LOG_END_ADDR / 2;
-    }
-    else if (block == 2)
-    {
-        log_addr = LOG_END_ADDR / 2;
-        end_addr = LOG_END_ADDR;
-    }
-    else return;
-
-    while (log_addr <= end_addr - LOG_ENTRY_SIZE)
+    while (log_addr <= LOG_END_ADDR - LOG_ENTRY_SIZE)
     {
         eeprom_write_bytes(log_addr, 1, (uint8_t[1]){0x00});
         // printf("%hu\n", log_addr);
