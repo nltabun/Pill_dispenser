@@ -161,7 +161,6 @@ void turn_dispenser(MotorSteps *motor_steps, int turns, bool *pill_dispensed)
             rotate_motor(motor_steps, false);
             if (pos % 4 == 0)
             {
-                printf("Position/4: %d\n", pos / 4);
                 update_position(pos / 4);
             }
         }

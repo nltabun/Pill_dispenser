@@ -171,8 +171,6 @@ int main(void)
                     printf("%s\n", msg);
                     add_message_to_log(msg);
 
-                    printf("Pill not dispensed!\n");
-                    // lora_msg("Pill not dispensed!");
                     for (int i = 0; i < 5; ++i) {
                         if(led == false)
                         {
