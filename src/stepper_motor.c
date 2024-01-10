@@ -164,11 +164,6 @@ void turn_dispenser(MotorSteps *motor_steps, int turns, bool *pill_dispensed)
                 printf("Position/4: %d\n", pos / 4);
                 update_position(pos / 4);
             }
-
-            if (!gpio_get(PIEZO_SENSOR_PIN) && !(*pill_dispensed)) // TODO: do this check with a GPIO interrupt for reliability
-            {
-                *pill_dispensed = true;
-            }
         }
     }
 
@@ -193,11 +188,4 @@ void opto_fork_setup(void)
     gpio_init(OPTO_FORK_PIN);
     gpio_set_dir(OPTO_FORK_PIN, GPIO_IN);
     gpio_pull_up(OPTO_FORK_PIN);
-}
-
-void piezo_sensor_setup(void)
-{
-    gpio_init(PIEZO_SENSOR_PIN);
-    gpio_set_dir(PIEZO_SENSOR_PIN, GPIO_IN);
-    gpio_pull_up(PIEZO_SENSOR_PIN);
 }

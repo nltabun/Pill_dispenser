@@ -11,6 +11,7 @@
 #define BUTTON_SW0 9
 #define BUTTON_SW1 8
 #define BUTTON_SW2 7
+#define PIEZO_SENSOR_PIN 27
 
 enum DispenserState
 {
@@ -23,6 +24,11 @@ enum DispenserState
 void init_all(void);
 void led_setup(void);
 void button_setup(void);
+void piezo_sensor_setup(void);
+static void gpio_handler(uint gpio, uint32_t event_mask);
+
+//Global variables
+static bool pillDispensed = false;
 
 int main(void)
 {
@@ -32,7 +38,6 @@ int main(void)
     uint64_t start_time;
     uint64_t time;
     uint8_t cycles_remaining;
-    bool pill_dispensed;
     uint8_t position = 0;
 
     MotorSteps MOTOR_STEPS = {
@@ -128,12 +133,12 @@ int main(void)
                 }
 
                 time = time_us_64();
-                turn_dispenser(&MOTOR_STEPS, 1, &pill_dispensed);
+                turn_dispenser(&MOTOR_STEPS, 1, &pillDispensed);
                 cycles_remaining--;
                 save_state_to_eeprom(&state, &cycles_remaining, &MOTOR_STEPS.current_step, &MOTOR_STEPS.steps_per_revolution);
                 update_position(0);
 
-                if (pill_dispensed)
+                if (pillDispensed)
                 {
                     printf("Pill dispensed!\n");
                     // lora_msg("Pill dispensed!");
@@ -143,10 +148,24 @@ int main(void)
                 {
                     printf("Pill not dispensed!\n");
                     // lora_msg("Pill not dispensed!");
+                    for (int i = 0; i < 5; ++i) {
+                        if(led == false)
+                        {
+                            gpio_put(LED_1, (led = true));
+                            led = true;
+                        }
+                        else
+                        {
+                            gpio_put(LED_1, (led = false));
+                            led = false;
+                        }
+                        sleep_ms(1000);
+                    }
+                    gpio_put(LED_1, (led = false));
                     lora_msg("AT+MSG=\"Pill not dispensed\"\r\n");
                 }
+                pillDispensed = false;
             }
-
             state = WAIT_FOR_CALIBRATION;
             save_state_to_eeprom(&state, 0, &MOTOR_STEPS.current_step, &MOTOR_STEPS.steps_per_revolution);
             break;
@@ -193,4 +212,17 @@ void button_setup(void)
     gpio_pull_up(BUTTON_SW0);
     gpio_pull_up(BUTTON_SW1);
     gpio_pull_up(BUTTON_SW2);
+}
+
+static void gpio_handler(uint gpio, uint32_t event_mask)
+{
+    pillDispensed = true;
+}
+
+void piezo_sensor_setup(void)
+{
+    gpio_init(PIEZO_SENSOR_PIN);
+    gpio_set_dir(PIEZO_SENSOR_PIN, GPIO_IN);
+    gpio_pull_up(PIEZO_SENSOR_PIN);
+    gpio_set_irq_enabled_with_callback(PIEZO_SENSOR_PIN, GPIO_IRQ_EDGE_FALL, true, gpio_handler);
 }
