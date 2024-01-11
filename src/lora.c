@@ -29,7 +29,7 @@ void lora_connect()
         switch (current_step)
         {
             case CONNECT:
-                result = Connect(attempts, pos, response, current_step);
+                result = connect(attempts, pos, response, current_step);
                 if (result == 1)
                     current_step = MODE;
                 else
@@ -74,7 +74,7 @@ void lora_connect()
     } while(function_done != 1);
 }
 
-int Connect(int attempts, int pos, char *response, enum Step current_step)
+int connect(int attempts, int pos, char *response, enum Step current_step)
 {
     while (attempts < MAX_ATTEMPTS && current_step == CONNECT)
     {

@@ -27,7 +27,7 @@ enum Step
 
 int read_string(char *response);
 void lora_connect();
-int Connect(int attempts, int pos, char *response, enum Step current_step);
+int connect(int attempts, int pos, char *response, enum Step current_step);
 int mode(int pos, char *response);
 int appkey(int pos, char *response);
 int class(int pos, char *response);

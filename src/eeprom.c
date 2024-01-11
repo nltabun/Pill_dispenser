@@ -1,4 +1,3 @@
-#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include "pico/stdlib.h"
@@ -37,17 +36,13 @@ uint8_t load_state_from_eeprom(uint8_t *cycles_remaining, uint8_t *current_step,
 
     // Check if valid dispenser state is stored in the EEPROM
     if (_validate_stored_value(read_buffer[0], read_buffer[1]))
-    {
         dispenser_state = read_buffer[0];
-    }
     else
-    {
         return dispenser_state;
-    }
 
     // Check if valid number of cycles remaining is stored in the EEPROM
     // This is present only if dispenser was shutdown in Dispensing state
-    if (dispenser_state == 3)
+    if (dispenser_state == 4)
     {
         if (_validate_stored_value(read_buffer[2], read_buffer[3]))
             *cycles_remaining = read_buffer[2];
@@ -56,35 +51,23 @@ uint8_t load_state_from_eeprom(uint8_t *cycles_remaining, uint8_t *current_step,
     }
 
     if (_validate_stored_value(read_buffer[4], read_buffer[5]))
-    {
         *current_step = read_buffer[4];
-    }
     else
-    {
         *current_step = 0;
-    }
 
     if (_validate_stored_value(read_buffer[6], read_buffer[8]) && _validate_stored_value(read_buffer[7], read_buffer[9]))
-    {
         *steps_per_revolution = (read_buffer[6] << 8) | read_buffer[7];
-    }
     else
-    {
         *steps_per_revolution = 0;
-    }
 
     if (_validate_stored_value(read_buffer[10], read_buffer[11]))
-    {
         *position = read_buffer[10];
-    }
     else
-    {
         *position = 0;
-    }
+    
+    printf("Read: %hhu %hhu %hhu %hhu %hhu %hhu\n", read_buffer[0], read_buffer[2], read_buffer[4], read_buffer[6], read_buffer[8], read_buffer[10]);
 
-    // printf("Loaded state: %hhu\nCycles remaining: %hhu\nCurrent step: %hhu\nSteps per revolution: %hu\nPosition: %hhu\n", *dispenser_state, *cycles_remaining, *current_step, *steps_per_revolution, *position);
-
-    return true;
+    return dispenser_state;
 }
 
 void save_state_to_eeprom(uint8_t dispenser_state, uint8_t *cycles_remaining, uint8_t *current_step, uint16_t *steps_per_revolution)
@@ -105,7 +88,7 @@ void save_state_to_eeprom(uint8_t dispenser_state, uint8_t *cycles_remaining, ui
     write_buffer[8] = ~(*steps_per_revolution >> 8);
     write_buffer[9] = ~(*steps_per_revolution & 0xFF);
 
-    // printf("Writing state to EEPROM: %hhu %hhu %hhu %hhu %hhu %hhu %hhu %hhu %hhu %hhu\n", write_buffer[0], write_buffer[1], write_buffer[2], write_buffer[3], write_buffer[4], write_buffer[5], write_buffer[6], write_buffer[7], write_buffer[8], write_buffer[9]);
+    printf("Write: %hhu %hhu %hhu %hhu %hhu\n", write_buffer[0], write_buffer[2], write_buffer[4], write_buffer[6], write_buffer[8]);
 
     eeprom_write_bytes(DISPENSER_STATE_ADDR, DISPENSER_STATE_LEN-2, write_buffer);
 }
@@ -172,7 +155,6 @@ void erase_log(void)
     while (log_addr <= LOG_END_ADDR - LOG_ENTRY_SIZE)
     {
         eeprom_write_bytes(log_addr, 1, (uint8_t[1]){0x00});
-        // printf("%hu\n", log_addr);
         log_addr += LOG_ENTRY_SIZE;
     }
 
