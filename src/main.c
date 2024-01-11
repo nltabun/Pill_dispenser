@@ -172,26 +172,13 @@ int main(void)
                 }
                 else
                 {
-
                     snprintf((char *)msg, MSG_MAX_LEN, "Pill not dispensed. %hu cycles remaining", cycles_remaining);
                     printf("%s\n", msg);
                     add_message_to_log(msg);
-
-                    for (int i = 0; i < 5; ++i) { // Too few blinks @Elmeri fix pls
-                        if(led == false)
-                        {
-                            gpio_put(LED_2, (led = true));
-                            led = true;
-                        }
-                        else
-                        {
-                            gpio_put(LED_2, (led = false));
-                            led = false;
-                        }
-                        sleep_ms(500);
+                    for (int i = 0; i < 5; ++i) {
+                        gpio_put(LED_2, (led = true));
+                        gpio_put(LED_2, (led = false));
                     }
-                    gpio_put(LED_2, (led = false));
-
                     lora_msg("AT+MSG=\"Pill not dispensed\"\r\n");
                 }
                 pillDispensed = false;
