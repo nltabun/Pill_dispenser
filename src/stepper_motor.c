@@ -1,4 +1,3 @@
-// Stepper motor stuff
 #include <stdio.h>
 #include "pico/stdlib.h"
 #include "stepper_motor.h"
@@ -102,40 +101,15 @@ void calibrate(MotorSteps *motor_steps, const int runs)
     printf("Calibration complete. Steps per revolution: %d\n", motor_steps->steps_per_revolution);
 }
 
-void recalibrate_after_poweroff(MotorSteps *motor_steps, const int cycles_remaining, uint8_t position)
+void recalibrate_after_poweroff(MotorSteps *motor_steps, uint8_t position)
 {
     printf("Recalibrating after poweroff...\n");
-    /*
-    int count = 0;
-    int icount = 0;
-
-    if (gpio_get(OPTO_FORK_PIN))
-    {
-        count++;
-        while (gpio_get(OPTO_FORK_PIN))
-        {
-            rotate_motor(motor_steps, true);
-            count++;
-        }
-    }
-    printf("Count: %d\n", count);
-
-    while (!gpio_get(OPTO_FORK_PIN))
-    {
-        rotate_motor(motor_steps, true);
-        icount++;
-    }
-    printf("iCount: %d\n", icount);
-    */
 
     int run_steps = position * 4;
     for (int i = 0; i < run_steps; i++)
     {
         rotate_motor(motor_steps, true);
     }
-
-    //bool dummy = true;
-    //turn_dispenser(motor_steps, (7 - cycles_remaining), &dummy);
 }
 
 void turn_dispenser(MotorSteps *motor_steps, int turns, bool *pill_dispensed)
@@ -160,9 +134,7 @@ void turn_dispenser(MotorSteps *motor_steps, int turns, bool *pill_dispensed)
         {
             rotate_motor(motor_steps, false);
             if (pos % 4 == 0)
-            {
                 update_position(pos / 4);
-            }
         }
     }
 

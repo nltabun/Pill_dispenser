@@ -1,4 +1,3 @@
-#include <stdint.h>
 #include <stdio.h>
 #include "pico/stdlib.h"
 #include "hardware/gpio.h"
@@ -43,6 +42,7 @@ int main(void)
     uint8_t cycles_remaining;
     uint8_t position = 0;
     uint8_t msg[MSG_MAX_LEN] = {0};
+    bool skip_wait = false;
 
     MotorSteps MOTOR_STEPS = {
         {{1, 0, 0, 0},  // 0
@@ -69,9 +69,12 @@ int main(void)
 
         if (state == DISPENSING)
         {
-            recalibrate_after_poweroff(&MOTOR_STEPS, cycles_remaining, position);
-            lora_msg("AT+MSG=\"Recalibrating\"\r\n");
+            recalibrate_after_poweroff(&MOTOR_STEPS, position);
+            lora_msg("AT+MSG=\"Recalibrated\"\r\n");
             printf("Recalibrated. Cycles remaining: %d\n", cycles_remaining);
+
+            if (position > 0)
+                skip_wait = true;
         }
     }
     else
@@ -146,9 +149,12 @@ int main(void)
             time = time_us_64();
             while (cycles_remaining > 0)
             {
-                while ((time_us_64() - time) < CYCLE_DURATION)
+                if (!skip_wait) // If the dispenser was in the middle of a turn on poweroff then we don't want to wait
                 {
-                    sleep_ms(10);
+                    while ((time_us_64() - time) < CYCLE_DURATION)
+                    {
+                        sleep_ms(10);
+                    }
                 }
 
                 time = time_us_64();
@@ -171,24 +177,25 @@ int main(void)
                     printf("%s\n", msg);
                     add_message_to_log(msg);
 
-                    for (int i = 0; i < 5; ++i) {
+                    for (int i = 0; i < 5; ++i) { // Too few blinks @Elmeri fix pls
                         if(led == false)
                         {
-                            gpio_put(LED_1, (led = true));
+                            gpio_put(LED_2, (led = true));
                             led = true;
                         }
                         else
                         {
-                            gpio_put(LED_1, (led = false));
+                            gpio_put(LED_2, (led = false));
                             led = false;
                         }
-                        sleep_ms(1000);
+                        sleep_ms(500);
                     }
-                    gpio_put(LED_1, (led = false));
+                    gpio_put(LED_2, (led = false));
 
                     lora_msg("AT+MSG=\"Pill not dispensed\"\r\n");
                 }
                 pillDispensed = false;
+                skip_wait = false;
             }
             state = WAIT_FOR_CALIBRATION;
             save_state_to_eeprom((uint8_t)state, 0, &MOTOR_STEPS.current_step, &MOTOR_STEPS.steps_per_revolution);

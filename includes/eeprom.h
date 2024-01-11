@@ -13,12 +13,10 @@
 #define DISPENSER_STATE_LAST_ADDR 32767
 #define DISPENSER_STATE_ADDR (DISPENSER_STATE_LAST_ADDR - DISPENSER_STATE_LEN)
 #define POSITION_ADDR (DISPENSER_STATE_LAST_ADDR - 2)
-#define LOG_SIZE 64
+#define LOG_SIZE 16
 #define LOG_ENTRY_SIZE 64
 #define LOG_START_ADDR 0
 #define LOG_END_ADDR (LOG_START_ADDR + LOG_SIZE * LOG_ENTRY_SIZE) // Must be divisible by 2
-#define LOG_BLOCK_COUNT 2
-#define LOG_BLOCK_SIZE (LOG_END_ADDR / LOG_BLOCK_COUNT) 
 #define MSG_MAX_LEN 61
 
 void eeprom_read_bytes(const uint16_t address, const uint8_t length, uint8_t *data);
