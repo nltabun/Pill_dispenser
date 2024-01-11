@@ -177,6 +177,7 @@ int main(void)
                     add_message_to_log(msg);
                     for (int i = 0; i < 5; ++i) {
                         gpio_put(LED_2, (led = true));
+                        sleep_ms(750);
                         gpio_put(LED_2, (led = false));
                     }
                     lora_msg("AT+MSG=\"Pill not dispensed\"\r\n");
