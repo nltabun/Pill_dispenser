@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "hardware/timer.h"
 #include "pico/stdlib.h"
 #include "hardware/gpio.h"
 #include "stepper_motor.h"
@@ -29,7 +30,6 @@ void button_setup(void);
 void piezo_sensor_setup(void);
 static void gpio_handler(uint gpio, uint32_t event_mask);
 
-//Global variables
 static bool pillDispensed = false;
 
 int main(void)
@@ -37,7 +37,6 @@ int main(void)
     enum DispenserState state;
     bool led = false;
     uint8_t led_timer = 0;
-    uint64_t start_time;
     uint64_t time;
     uint8_t cycles_remaining;
     uint8_t position = 0;
@@ -84,8 +83,7 @@ int main(void)
         state = WAIT_FOR_CALIBRATION; // Set state to '1'
     }
 
-    start_time = time_us_64();
-    time = start_time;
+    time = time_us_64();
     
 
     while (true)
