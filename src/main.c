@@ -179,6 +179,7 @@ int main(void)
                         gpio_put(LED_2, (led = true));
                         sleep_ms(750);
                         gpio_put(LED_2, (led = false));
+                        sleep_ms(750);
                     }
                     lora_msg("AT+MSG=\"Pill not dispensed\"\r\n");
                 }
