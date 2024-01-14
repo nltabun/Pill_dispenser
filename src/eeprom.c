@@ -65,8 +65,6 @@ uint8_t load_state_from_eeprom(uint8_t *cycles_remaining, uint8_t *current_step,
     else
         *position = 0;
     
-    printf("Read: %hhu %hhu %hhu %hhu %hhu %hhu\n", read_buffer[0], read_buffer[2], read_buffer[4], read_buffer[6], read_buffer[8], read_buffer[10]);
-
     return dispenser_state;
 }
 
@@ -87,8 +85,6 @@ void save_state_to_eeprom(uint8_t dispenser_state, uint8_t *cycles_remaining, ui
     write_buffer[7] = *steps_per_revolution & 0xFF;
     write_buffer[8] = ~(*steps_per_revolution >> 8);
     write_buffer[9] = ~(*steps_per_revolution & 0xFF);
-
-    printf("Write: %hhu %hhu %hhu %hhu %hhu\n", write_buffer[0], write_buffer[2], write_buffer[4], write_buffer[6], write_buffer[8]);
 
     eeprom_write_bytes(DISPENSER_STATE_ADDR, DISPENSER_STATE_LEN-2, write_buffer);
 }
@@ -120,7 +116,7 @@ void add_message_to_log(const uint8_t *msg)
     eeprom_write_bytes(LOG_START_ADDR, msg_len, msg);
 }
 
-void read_log()
+void read_log(void)
 {
     uint8_t buffer[64];
     uint16_t log_addr = LOG_START_ADDR;

@@ -9,14 +9,14 @@
 #define I2C_PORT_SDL_PIN 15
 #define I2C_BAUD_RATE 100000
 #define DEV_ADDR 0x50
-#define DISPENSER_STATE_LEN 12 // TBD
+#define DISPENSER_STATE_LEN 12 
 #define DISPENSER_STATE_LAST_ADDR 32767
 #define DISPENSER_STATE_ADDR (DISPENSER_STATE_LAST_ADDR - DISPENSER_STATE_LEN)
 #define POSITION_ADDR (DISPENSER_STATE_LAST_ADDR - 2)
 #define LOG_SIZE 16
 #define LOG_ENTRY_SIZE 64
 #define LOG_START_ADDR 0
-#define LOG_END_ADDR (LOG_START_ADDR + LOG_SIZE * LOG_ENTRY_SIZE) // Must be divisible by 2
+#define LOG_END_ADDR (LOG_START_ADDR + LOG_SIZE * LOG_ENTRY_SIZE) 
 #define MSG_MAX_LEN 61
 
 void eeprom_read_bytes(const uint16_t address, const uint8_t length, uint8_t *data);
