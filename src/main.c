@@ -160,6 +160,7 @@ int main(void)
                 cycles_remaining--;
                 save_state_to_eeprom((uint8_t)state, &cycles_remaining, &MOTOR_STEPS.current_step, &MOTOR_STEPS.steps_per_revolution);
                 update_position(0);
+                sleep_ms(100);
 
                 if (pillDispensed)
                 {
